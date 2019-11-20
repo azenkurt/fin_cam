@@ -1,0 +1,103 @@
+#game1_StartBut{
+    position: absolute;
+    width: 700px;
+    height: 523px;
+    left: 240px;
+    top: 100px;
+    background-image: url(../../pics/game1/task.png);
+    opacity: 0;
+    transition: 1s;    
+    z-index: -100;
+}
+#game1_MainForm{
+    position: absolute;
+    width: 940px;
+    height: 692px;
+    left: 50%;
+    top: 50%;
+    margin-left: -470px;
+    margin-top: -346px;
+    opacity: 0;    
+    z-index: -100;
+    background-image: url(../../pics/game1/back1.png);
+}
+#game1_MainForm_OK{
+    position: absolute;    
+    top: 50%;
+    width: 500px;
+    left: -1000px;
+    height: 500px;
+    background-image: url(../../pics/game1/good.png);
+    margin-left: -250px;
+    margin-top: -250px;
+    z-index: -100;
+    opacity: 0;
+}
+#game1_MainForm_BAD{
+    position: absolute;
+    left: -1000px;
+    top: 50%;
+    margin-left: -250px;
+    margin-top: -250px;
+    width: 500px;
+    height: 500px;
+    opacity: 0;
+    background-image: url(../../pics/game1/bad.png);
+}
+.game1_AnsLetter{
+    position: absolute;
+    width: 50px;
+    height: 86px;
+    top: 89px;    
+}
+#game1_MainPic{
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    left:616px;
+    top: 36px;
+    background-size: 100%;   
+}
+.game1_Let{
+    position: absolute;
+    width: 50px;
+    height: 86px;   
+    background-position-y: 10px;
+    transition: ease-in-out 0.1s;
+}
+.game1_Let:hover{
+    background-position-y: 0;
+}
+#game1_TimerLab{
+    position: absolute;    
+    left: 100px;
+    width: 168px;
+    top: 180px;
+    text-align: center;
+    font: 25px "Times New Roman";
+}
+.game1_Timer{
+    position: absolute;
+    width: 40px;
+    height: 69px;
+    top: 237px;       
+    background-image: url(../../pics/game1/pics/cifri/line.png);
+    transition: ease 0.5s;
+}
+#game1_PointGetLabel{
+    position: absolute;
+    width: 250px;
+    text-align: center;
+    font: 25px "Times New Roman";
+    top: 180px;
+    left: 290px;
+}
+.game1_Point{
+    position: absolute;
+    top: 237px;
+    width: 40px;
+    height: 69px;   
+    background-image: url(../../pics/game1/pics/cifri/line.png);
+    background-position-y: 0;
+    transition: ease 0.5s;
+}

@@ -1,0 +1,84 @@
+#game3_StartBut{
+    position: absolute;
+    width: 640px;
+    height: 597px;
+    left: 500px;
+    top: 50px;
+    background-image: url(../../pics/game3/task.png);
+    opacity: 0;
+    transition: 2s;
+    z-index: -100;
+}
+#game3_MainForm{
+    position: absolute;
+    width: 940px;
+    height: 692px;
+    left: 50%;
+    top: 50%;
+    margin-left: -470px;
+    margin-top: -346px;
+    opacity: 0;    
+    z-index: -100;
+    background-image: url(../../pics/game3/back3.png);
+}
+#game3_MainForm_OK{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 600px;
+    height: 400px;
+    margin-left: -300px;
+    margin-top: -200px;
+    background-image: url(../../pics/game3/solved.png);
+    z-index: -100;
+    opacity: 0;
+}
+#game3_MainForm_BAD{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 600px;
+    height: 400px;
+    margin-left: -300px;
+    margin-top: -200px;
+    background-image: url(../../pics/game3/not_solved.png);
+    z-index: -100;
+    opacity: 0;
+}
+.game3_GUI{
+    position: absolute;
+    width: 235px;
+    height: 50px;
+    top: 495px;
+    text-align: center;
+    font:30px "Times New Roman"
+}
+.game3_GUI:hover{
+    font:bold 32px "Times New Roman";
+    top: 485px; 
+}
+#game3_MainWord{
+    position: absolute;
+    width: 100%;
+    height: 70px;
+    top: 45%;
+    left: 50%;
+    margin-left: -470px;
+    margin-top: -35px;
+    font:90px "Times New Roman";
+    text-align: center;
+}
+.game3_balls{
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    top: 125px;
+}
+#game3_emo{
+    position: absolute;
+    width: 300px;
+    height: 238px;
+    left: -220px;
+    top: 320px;
+    background-image: url(../../pics/game3/pic3.png);
+}

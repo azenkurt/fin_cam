@@ -1,0 +1,43 @@
+.MainMenu {
+    position: absolute;
+    width: 1000px;
+    height: 700px;
+    left: 0px;
+    top: 0px;    
+}
+
+.But {
+    position: absolute;
+    height: 45px;
+    border: 1px solid black;
+}
+.But>p {
+   font: 20px "Monotype Corsiva"; 
+   text-align: center;   
+   line-height: 20px;
+   margin-top: 12px;
+}
+.But:hover {
+    transform: scaleX(1.05) scaleY(1.1);
+    border: 1px solid lightblue;
+}
+.L { left: 10px;}
+.n00 { top: 450px; width: 280px;}
+.n0 { top: 500px; width: 330px;}
+.n1 { top: 550px; width: 380px;}
+.n2 { top: 600px; width: 430px;}
+.n3 { top: 650px; width: 480px;}
+.But.R.n3 { left: 510px;}
+.But.R.n2 { left: 560px;}
+.But.R.n1 { left: 610px;}
+.But.R.n0 { left: 660px;}
+.But.R.n00 { left: 710px;}
+
+.Authors {
+    position: absolute;
+    width: 900px;
+    display: flex;
+    align-content: center;
+    justify-content: space-around;
+    left: 50px;
+}

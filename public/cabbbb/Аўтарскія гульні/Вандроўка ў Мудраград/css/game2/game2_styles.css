@@ -1,0 +1,72 @@
+#game2_StartBut{
+    position: absolute;
+    width: 600px;
+    height: 478px;
+    left: 80px;
+    top: 10px;
+    background-image: url(../../pics/game2/task.png);
+    opacity: 0;
+    transition: 0.5s;
+    z-index: -100;
+}
+#game2_MainForm{
+    position: absolute;
+    width: 940px;
+    height: 692px;
+    left: 50%;
+    top: 50%;
+    margin-left: -470px;
+    margin-top: -346px;
+    opacity: 0;  
+    z-index: -100;
+    background-image: url(../../pics/game2/back2.png);
+}
+#game2_MainForm_OK{
+    position: absolute;
+    left: -490px;
+    top: 10px;
+    width: 500px;
+    height: 521px;     
+}
+#game2_MainForm_BAD{
+    position: absolute;
+    top: 10%;
+    width: 500px;
+    height: 343px;
+    left: -1000px;
+    background-image: url(../../pics/game2/bad.png);    
+}
+.game2_port{
+    position: absolute;
+    width: 120px;
+    height: 144px;   
+    background-size: 100%;
+    border-radius: 4px;
+}
+.game2_port:hover{
+    box-shadow: 0 0 0 3px lightgreen;
+}
+.game2_port:active{
+   
+}
+.game2_AnswPort{
+    position: absolute;
+    width: 145px;
+    height: 175px;
+    border: 1px solid black;
+    top: 412px;
+    border-radius: 8px;
+    text-align: center;
+    background-size: 100%;
+    font: bold;
+    font: 25px "Times New Roman";
+}
+#game2_RezMessage{
+    position: absolute;
+    width: 600px;
+    height: 70px;
+    left: 5%;
+    top: 25%;    
+    font: 40px "Times New Roman";
+    text-align: left;
+}

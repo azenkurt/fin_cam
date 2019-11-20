@@ -1,0 +1,101 @@
+#game4_main{
+    overflow: hidden;  
+}
+#game4_mainScreen{
+    position: absolute;
+    width: 1000px;
+    height: 700px;
+    left: -150%;
+    top: 50%;
+    margin-left: -500px;
+    margin-top: -350px;
+    border: 1px solid black;
+    background-color: linen;
+}
+.game4_pics{
+    position: absolute;
+    width: 350px;
+    height: 300px;
+    top: 25px;
+    left: 100px;   
+    background-repeat: no-repeat;
+}
+#game4_pic1{
+    left: 550px;    
+}
+.game4_senses{
+    position: absolute;
+    width: 450px;
+    left: 50px;
+    text-align: center;
+    font: 25px "Times New Roman";
+    top: 400px;
+}
+.game4_senses:hover{
+    box-shadow: 0 0 0 1px black;
+}
+.game4_frazes{
+    position: absolute;
+    width: 450px;
+    left: 500px;
+    text-align: center;
+    font: 25px "Times New Roman";
+    top: 400px;
+}
+.game4_frazes:hover{
+   box-shadow: 0 0 0 1px black; 
+}
+#game4_answerBut{
+    position: absolute;
+    width: 50px;
+    height: 50px;   
+    left: 50%;
+    margin-left: -25px;
+    top: 610px;
+    opacity: 0;    
+}
+.game4_frazes::active{
+    font: 30px bold "Times New Roman";
+}
+#game4_answerBar{
+    position: absolute;
+    width: 900px;
+    left: 50%;
+    top: 50%;
+    height: 80px;   
+    margin-left: -450px;
+    margin-top: -20px; 
+}
+.game4_answerPoints{
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    left:50px;
+    top: 5px;    
+    opacity: 0;
+    transition: opacity 2s;
+}
+#game4_rezScreen{
+    position: absolute;
+    left: -150%;
+    margin-left: -60px;
+    top: 60%;
+    opacity: 0;
+}
+#game4_OK{
+    position: absolute;
+    width: 800px;
+    height: 600px;
+    left: 2000px;
+    top:50px;  
+    background-image: url(../../pics/game4/okScreen2.png);   
+}
+#game4_BAD{
+    position: absolute;
+    width: 600px;
+    height: 350px;
+    left: 50%;
+    top: 5000px;   
+    margin-left: -300px;
+    background-image: url(../../pics/game4/badScreen.png);   
+}

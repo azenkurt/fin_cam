@@ -1,0 +1,86 @@
+#mainWindow{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1285px;
+    height: 700px;
+    margin-left: -642px;
+    margin-top: -350px;
+    background-image: url(../pics/kingdom.jpg);
+    background-size: 100%;
+    border: 1px solid black;
+    overflow: hidden;
+}
+#Main_StartBut{
+    position: absolute;
+    width: 978px;
+    height: 500px;
+    background-image: url(../pics/start2.png);
+    left: 50%;
+    top: 450px;
+    margin-left: -500px;
+    margin-top: -250px;
+    transition: 1s;    
+}
+#game1_Pers{
+    position: absolute;
+    width: 140px;
+    height: 300px;
+    left: 160px;
+    top: 380px;
+    margin-left: -70px;
+    margin-top: -150px;
+    background-image: url(../pics/game1/pers1.png);
+    opacity: 0;
+    transition: 1s;    
+}
+#game2_Pers{
+    position: absolute;
+    width: 114px;
+    height: 225px;
+    left: 767px;
+    top: 250px;
+    background-image: url(../pics/game2/pers2.png);
+    opacity: 0;
+    z-index: -10;
+}
+#game3_Pers{
+    position: absolute;
+    width: 350px;
+    height:450px;
+    left: 157px;
+    top: 152px;
+    background-image: url(../pics/game3/pers3.png);
+    opacity: 0;
+    z-index: -10;
+}
+#game4_Pers{
+    position: absolute;
+    width: 700px;
+    height:523px;
+    left: 60%;
+    top: 50%;
+    margin-left: -350px;
+    margin-top:-270px;
+    background-image: url(../pics/game4/pers4.png);
+    opacity: 0;
+    z-index: -10;
+}
+#finalGate{
+    position: absolute;   
+    background-image: url(../pics/gate.png);
+    top: 388px;
+    height: 179px;
+    left: -1502px;   
+    width: 147px; 
+    overflow: hidden;  
+}
+#finalMessage{
+    position: absolute;
+    width: 1000px;
+    height: 303px;
+    top: 19px;
+    left: -1000px;
+    margin-left: -530px;
+    background-image: url(../pics/message.png);    
+}

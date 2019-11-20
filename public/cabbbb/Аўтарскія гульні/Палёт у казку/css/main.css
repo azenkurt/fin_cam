@@ -1,0 +1,178 @@
+.screen{
+    position: absolute;
+    width: 1000px;
+    height: 650px;
+    left: 150%;
+    top: 50%;
+    margin-left: -500px;
+    margin-top: -325px;
+    overflow: hidden;
+    transition:all 0.5s;
+    border-radius: 15px;
+}
+#intro{
+    left: 50%;
+    overflow: hidden;
+}
+#startBut{
+    position: absolute;    
+    width: 100%;
+    text-align: center;
+    top: 40%;
+    font: 40px "Times New Roman";
+}
+.smallFon{
+    width: 100px;
+    height: 65px;
+    position: absolute;
+    background-size: 100%;
+    border-radius: 10px;    
+}
+.smallFon:hover{
+    margin-left: -8px;
+    margin-top: -5px;
+    width: 116px;
+    height: 75px;
+    background-size: 100%;
+    box-shadow: 0 0 10px 0 gray;
+}
+#searchingText{
+    position: absolute; 
+    width: 250px;
+    height: 50px;
+    left: 600px;
+    top: 580px;
+    font: 40px "Times New Roman";
+    border: 1px solid gray;
+    border-radius: 4px;
+    text-align: center;
+    z-index: 1000;      
+}
+#searchBut{
+    position: absolute;
+    left:860px;
+    top: 541px;
+    font: 40px "Times New Roman";
+    width:100px;
+    z-index: 1000;  
+}
+.pica{
+    position: absolute;
+    left: 50%;
+    top: 50%;  
+    background-size: 100%;  
+    transition:transform 0.5s, opacity 0.5s;       
+}
+#deleter{
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-image: url(../pics/deleter.png);
+    left: 950px;
+    top: 10px;
+}
+#vocab{
+    position: absolute;
+    width: 400px;
+    height: 31px;
+    left: 150%;
+    top: 50%;     
+    margin-left: -230px;
+    margin-top: -30px;
+    background-image: url(../pics/vocab.png);
+}
+#vocabRu{
+    position: absolute;
+    left: 35px;
+    top: 6px;
+    width: 132px;
+    height: 17px;
+    font: 15px "Times New Roman";
+}
+#vocabBy{
+    position: absolute;
+    left: 234px;
+    top: 6px;
+    width: 132px;
+    height: 17px;
+}
+#vacaber{
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 51px;
+    height: 80px;
+    background-image: url(../pics/owl.png);
+    transition: all 1s;
+}
+#translate{
+   position: absolute;
+    top: 31px;
+    left: 50%;
+    width: 200px;
+    margin-left: -100px;
+}
+#vocabMid{
+    position: absolute;
+    width:31px;
+    height: 31px;
+    left: 185px;
+    top: 0px;
+}
+
+.smile0{
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    background-image: url(../pics/smiles/q0.png);  
+    left: 800px;
+    top: 400px;
+    background-size: 100%; 
+    left: 150%;
+}
+#smileDiv{
+   position: absolute;
+   width: 500px;
+   height: 71px;
+   left: 50%;
+   margin-left: -250px;
+   top: 105%;
+}
+.smile{
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 70px;
+    height: 70px;    
+    z-index: 400;
+}
+#smile1{
+    background-image: url(../pics/smiles/q1.gif)
+}
+#smile2{
+    background-image: url(../pics/smiles/q2.gif);
+    left: 70px;
+}
+#smile3{
+    background-image: url(../pics/smiles/q3.gif);
+    left: 140px;
+}
+#smile4{
+    background-image: url(../pics/smiles/q4.gif);
+    left: 210px;
+}
+#smile5{
+    background-image: url(../pics/smiles/q5.gif);
+    left: 280px;
+}
+#smile6{
+    background-image: url(../pics/smiles/q6.gif);
+    left: 350px;
+}
+#smile7{
+    background-image: url(../pics/smiles/q7.gif);
+    left: 420px;
+}
+#game{
+    overflow: hidden;
+}

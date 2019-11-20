@@ -1,0 +1,11 @@
+.ShowPDF {
+    width: 100%;
+    height: 100%;
+}
+.ShowPDF_but{
+    position: absolute;
+    width: 300px;
+    left: 50%;
+    margin-left: -150px;
+    top: 670px;
+}

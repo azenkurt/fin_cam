@@ -1,0 +1,184 @@
+#main{
+       position: absolute;
+       width: 1000px;
+       height: 650px;
+       left: 50%;
+       top: 50%;       
+       margin-left: -500px;
+       margin-top: -325px;
+       overflow: hidden;         
+    }
+    #intro{
+        width: 1000px;
+        height: 650px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        margin-left: -500px;
+        margin-top: -325px;
+        background-image: url(../pics/Main.png);
+        
+    }
+    
+    #game,#finish{
+       position: absolute;
+       width: 1000px;
+       height: 700px;
+       left: 150%;
+       top: 50%;       
+       margin-left: -500px;
+       margin-top: -350px;
+       overflow: hidden;
+    }
+    #finish{
+        left: 150%;
+    }
+    .letter{
+        position: absolute;
+        left: 50px;
+        top: 400px;
+        width: 50px;
+        height: 86px;        
+        align-content: center;       
+        background-position-y: 10px;
+        transition: ease-in-out 0.1s;
+    }
+    .letter:hover{
+        background-position-y: 0;
+    }
+    #pic{
+        position: absolute;
+        width: 350px;
+        height: 350px;       
+        left: 625px;
+        top: 40px;         
+    }
+    .answLet{
+        position: absolute;
+        top: 90px;
+        width: 50px;
+        height: 86px;
+        background-color: lightgray;
+        left: 50px;       
+        opacity: 0;    
+        overflow: hidden;    
+    }
+    .innerPic{
+        position: absolute;
+        left: 0;
+        top: -86px;        
+        width: 50px;
+        height: 86px;
+        transition: linear 0.25s;        
+    }
+    #timer{
+        position: absolute;
+        left: 50px;
+        top: 200px;
+        font: 30px 'Times New Roman';
+    }
+    #points{
+       position: absolute;
+       left: 300px;
+       top: 200px;
+       font:30px "Times New Roman";
+    }
+    .TimeBlock{
+        position: absolute;
+        left: 70px;
+        top: 270px;
+        width:40px;
+        height: 69px;
+        overflow: hidden;        
+        background-image: url(../pics/cifri/line.png); 
+        transition: all 0.5s;
+     }
+     #block1{
+         left: 120px;
+     }
+     #block2{
+         left: 170px;
+     }
+     .PointsBlock{
+         position: absolute;
+         left: 300px;
+         top: 270px;
+         width: 40px;
+         height: 69px;
+         overflow: hidden;
+         background-image: url(../pics/cifri/line.png); 
+         transition: all 0.5s;
+     }
+     #points1{
+         left:350px; 
+     } 
+     #points2{
+         left:400px; 
+     }
+     #points3{
+         left:450px; 
+     }
+     #ResPoints{
+         position: absolute;
+         width: 100%;
+         top: 25%;
+         text-align: center;
+     }
+    .ResPointsBlock{
+         position: absolute;
+         left: 413px;
+         top: 30%;
+         height: 69px;
+         width: 40px;         
+         overflow: hidden;
+         background-image: url(../pics/cifri/line.png);
+         transition: all 0.3s;
+     }
+     #ResPoints1{
+         left: 458px;
+     }
+     #ResPoints2{
+         left: 502px;
+     }
+     #ResPoints3{
+         left: 547px;
+     }
+     #ResGet{
+         position: absolute;
+         left: 50%;
+         margin-left: -300px;
+         width: 600px;
+         text-align: center;
+         font: bold 46px "Times New Roman";         
+         top: 10%;
+         box-shadow: 0 0 0 1px lightblue;         
+     }
+     #Mark{
+         position: absolute;
+         width: 100%;
+         text-align: center;
+         top: 45%;
+     }
+     .ResMark{
+         position: absolute;
+         left: 458px;
+         top: 50%;
+         width: 40px;
+         height: 69px;        
+         overflow: hidden;
+         background-image: url(../pics/cifri/line.png);
+         transition: all 1s;
+     }
+     #ResMark1{
+         left: 502px;
+     }
+     #but1{
+         position: absolute;
+         left: 50%;
+         width: 330px;
+         margin-left: -191px;
+         height: 95px;         
+         background-image: url(../pics/StartBut.png);
+         top: 445px;         
+         text-align: center;
+     }
