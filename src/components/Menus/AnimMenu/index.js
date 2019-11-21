@@ -22,7 +22,7 @@ class AnimMenu extends React.Component {
             list.push (
                 <div 
                     className = "AnimMenu_anim"
-                    onClick = { () => {this.props.ShowAnim( 'AnimMenu', 'anim', el)} }>{el}</div> 
+                    onClick = { () => {this.props.ShowAnim( 'AnimMenu', 'tests', el)} }>{el}</div> 
             )
         })
         return list;

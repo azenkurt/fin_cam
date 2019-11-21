@@ -1,0 +1,23 @@
+.LibrMenu_el{
+    width: 90%;
+    font: 20px "Times New Roman";
+    height: 30px;
+    text-align: left;
+    box-shadow: 1px 5px 10px 2px rgba(0,0,0,0.75);
+    margin-bottom: 15px;
+}
+.LibrMenu_el:hover{
+    box-shadow: 1px 5px 10px 2px lightblue; 
+}
+.LibrMenu {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;    
+}
+.LibrMenu_but{
+    position: absolute;
+    width: 300px;
+    left: 50%;
+    margin-left: -200px;
+    top: 670px;
+}

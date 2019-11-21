@@ -25,7 +25,7 @@ let initRed = ( state = InitState, action) => {
             state = {...state, 
                     curScreen : "ShowAnim", 
                     curSub: action.sub, 
-                    curANIM : action.fileName,
+                    curAnim : action.fileName,
                     curOwner : action.owner};
             break;
         case "SWITCH_TO_TESTS_MENU" :
@@ -33,6 +33,30 @@ let initRed = ( state = InitState, action) => {
             break;
         case "SWITCH_TO_TRAININGS_MENU" :
             state = { ...state, curScreen : "TrainingsMenu"};
+            break;
+        case "SWITCH_TO_SP_MENU" :
+            state = { ...state, curScreen : "SPMenu"};
+            break;
+        case "SWITCH_TO_GAMES_MENU" :
+            state = { ...state, curScreen : "GamesMenu"};
+            break;
+        case "SWITCH_TO_LINGV_MENU" :
+            state = { ...state, curScreen : "LingvMenu"};
+            break;
+        case "SWITCH_TO_OLYMP_MENU" :
+            state = { ...state, curScreen : "OlympMenu"};
+            break;
+        case "SWITCH_TO_LIBR_MENU" :
+            state = { ...state, curScreen : "LibrMenu"};
+            break;
+        case "SWITCH_TO_AUDIO_MENU" :
+            state = { ...state, curScreen : "AudioMenu"};
+            break;
+        case "SWITCH_TO_AUTHOR_MENU" :
+            state = { ...state, 
+                        curScreen : "Author",
+                        numb : action.numb
+                    };
             break;
     }           
     return state;

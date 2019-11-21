@@ -38,6 +38,10 @@ let mapDispatch = dispatch => {
                 switch ( owner ) {
                     case 'NPBMenu' : dispatch ({ type : "SWITCH_TO_NPB_MENU" }); break;
                     case 'TestsMenu' : dispatch ({ type : "SWITCH_TO_TESTS_MENU" }); break;
+                    case 'SPMenu' : dispatch ({ type : "SWITCH_TO_SP_MENU" }); break;
+                    case 'LingvMenu' : dispatch ({ type : "SWITCH_TO_LINGV_MENU" }); break;
+                    case 'OlympMenu' : dispatch ({ type : "SWITCH_TO_OLYMP_MENU" }); break;
+                    case 'LibrMenu' : dispatch({ type :"SWITCH_TO_LIBR_MENU"}); break;
                 }                
             },
         BackToMainMenu : () => dispatch ({ type : "MAIN_MENU"})      

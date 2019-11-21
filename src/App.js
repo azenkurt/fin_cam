@@ -11,6 +11,13 @@ import AnimMenu from './components/Menus/AnimMenu';
 import ShowAnim from './components/SubMenu/ShowAnim';
 import TestsMenu from './components/Menus/TestsMenu';
 import TrainingsMenu from './components/Menus/TrainingsMenu';
+import SPMenu from './components/Menus/SPMenu';
+import GamesMenu from './components/Menus/GamesMenu';
+import LingvMenu from './components/Menus/LingvMenu';
+import OlympMenu from './components/Menus/OlympMenu';
+import LibrMenu from './components/Menus/LibrMenu';
+import AudioMenu from './components/Menus/AudioMenu';
+import Author from './components/MainMenu/Author';
 
 class App extends React.Component {
   showPage() {
@@ -23,6 +30,13 @@ class App extends React.Component {
       case 'ShowAnim' : comp = <ShowAnim />; break;
       case 'TestsMenu' : comp = <TestsMenu />; break;
       case 'TrainingsMenu' : comp = <TrainingsMenu />; break; 
+      case 'SPMenu' : comp = <SPMenu />; break;
+      case 'GamesMenu' : comp = <GamesMenu />; break;
+      case 'LingvMenu' : comp = <LingvMenu />; break;
+      case 'OlympMenu' : comp = <OlympMenu />; break;
+      case 'LibrMenu' : comp = <LibrMenu />; break;
+      case 'AudioMenu' : comp = <AudioMenu />; break;
+      case 'Author' : comp = <Author />; break;
     }
     return comp;
   }
