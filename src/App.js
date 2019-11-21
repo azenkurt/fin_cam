@@ -7,6 +7,8 @@ import NPB from './components/Menus/NPBMenu';
 import ShowPDF from './components/SubMenu/ShowPDF';
 
 import { connect } from 'react-redux';
+import AnimMenu from './components/Menus/AnimMenu';
+import ShowAnim from './components/SubMenu/ShowAnim';
 
 class App extends React.Component {
   showPage() {
@@ -15,6 +17,8 @@ class App extends React.Component {
       case 'MainMenu' : comp = <MainMenu />; break; 
       case 'NPB' : comp = <NPB />; break;    
       case 'ShowPDF' : comp = <ShowPDF />; break;
+      case 'AnimMenu' : comp = <AnimMenu />; break;
+      case 'ShowAnim' : comp = <ShowAnim />; break;
     }
     return comp;
   }

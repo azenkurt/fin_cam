@@ -40,6 +40,11 @@ class NPBMenu extends React.Component {
         return (
             <div className = "NPBMenu">                
                 { this.renderLinkList() }
+                <button
+                    className = "NPBMenu_but"
+                    onClick = { ()=> this.props.BackToMainMenu() }>
+                    Вярнуцца да галоўнага меню
+                </button>
             </div>
         )
     }
@@ -50,7 +55,8 @@ const mapState = ( state ) => {
 }
 const mapDispatch = dispatch => {
     return {
-         ShowPDF : ( ff ) => dispatch({ type : "SHOW_PDF", fileName : ff})
+         ShowPDF : ( ff ) => dispatch({ type : "SHOW_PDF", fileName : ff}),
+         BackToMainMenu : () => dispatch ({ type : "MAIN_MENU"})        
     }
 }
 

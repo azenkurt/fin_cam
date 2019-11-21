@@ -1,0 +1,24 @@
+.AnimMenu {
+    width: 100%;
+    height: 100%;
+}
+.AnimMenu_cont {
+    widows: 100%;
+    height: 650px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    flex-wrap: wrap;
+}
+.AnimMenu_but{
+    position: absolute;
+    width: 300px;
+    left: 50%;
+    margin-left: -200px;
+    top: 670px;
+}
+.AnimMenu_anim {
+    width: 900px;
+    height: 50px;
+}

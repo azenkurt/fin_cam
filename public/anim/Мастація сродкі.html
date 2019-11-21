@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>SlideCastle</title>
+</head>
+<style>
+	#main{
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 900px;
+		height: 600px;
+		margin-left: -450px;
+		margin-top: -300px;
+		box-shadow: 0 0 0 1px lightblue;
+		background-image: url(backs/2.jpg);		
+		overflow: hidden;
+	}	
+	.block{
+		position: absolute;
+		width: 300px;
+		height: 200px;
+		background-image: url(backs/block.png);
+		background-color: white;
+		border-radius: 8px;
+		transition: all 500ms linear;		
+	}
+	#fBut,#tBut{
+		position: absolute;
+		width: 50px;
+		height: 50px;
+		background-color: blue;
+		left: 60%;
+		top: 600px;
+		transition: all 500ms linear;
+        border-top-left-radius: 30px;
+        border-top-right-radius: 30px;
+	}
+	#tBut{
+		background-color: green;
+		left: 35%;
+	}
+	#QuestText{
+		position: absolute;
+		width: 800px;
+		left: 25px;
+		height: 200px;
+		text-align: center;
+		font: 45px "Times New Roman";
+		top: -60%;
+		transition: all 500ms linear;
+	}
+    #AnswerText1{
+        position: absolute; 
+        width: 250px;
+        left: 50%;
+        margin-left: -250px;
+        font:italic 40px "Times New Roman";
+        top: 600px;        
+        z-index: 80;
+        text-align: center;
+        
+    }
+    #AnswerText2{
+        position: absolute;
+        width: 250px;
+        left: 50%;
+        font:italic 40px "Times New Roman";
+        top: 600px;        
+        text-align: center;
+        z-index: 80;
+    }
+</style>
+<body>
+	<div id="main">
+		<div id="block1" class="block" title=1></div>
+		<div id="block2" class="block" title=1></div>
+		<div id="block3" class="block" title=1></div>
+		<div id="block4" class="block" title=1></div>
+		<div id="block5" class="block" title=1></div>
+		<div id="block6" class="block" title=1></div>
+		<div id="block7" class="block" title=1></div>
+		<div id="block8" class="block" title=1></div>
+		<div id="block9" class="block" title=1></div>
+		<p id="QuestText">bkhkjhjkhdkj</p>
+        <p id="AnswerText1">answer1</p>
+        <p id="AnswerText2">answer2</p>
+		<div id="tBut"></div>
+		<div id="fBut"></div>
+	</div>
+</body>
+<script>
+    var mainForm=document.getElementById('main');
+    var qq=Math.floor(Math.random()*1100);
+    if ((qq>=100)&&(qq<200)){mainForm.style.backgroundImage="url('./backs/1.jpg')";};
+    if ((qq>=200)&&(qq<300)){mainForm.style.backgroundImage="url('./backs/2.jpg')";};
+     if ((qq>=300)&&(qq<400)){mainForm.style.backgroundImage="url('./backs/3.jpg')";};
+      if ((qq>=400)&&(qq<500)){mainForm.style.backgroundImage="url('./backs/4.jpg')";};
+       if ((qq>=500)&&(qq<600)){mainForm.style.backgroundImage="url('./backs/5.jpg')";};
+        if ((qq>=600)&&(qq<700)){mainForm.style.backgroundImage="url('./backs/6.jpg')";};
+         if ((qq>=700)&&(qq<800)){mainForm.style.backgroundImage="url('./backs/7.jpg')";};
+          if ((qq>=800)&&(qq<900)){mainForm.style.backgroundImage="url('./backs/8.jpg')";};
+           if ((qq>=900)&&(qq<1000)){mainForm.style.backgroundImage="url('./backs/9.jpg')";};
+            if ((qq>=1000)&&(qq<1100)){mainForm.style.backgroundImage="url('./backs/10.jpg')";};
+    
+    
+	var sentenses=[];
+	sentenses[0]='Гэта мастацкі сродак, у якім адны паняцці замяняюцца другімі на аснове іх колькасных суадносін,  ужыванне часткі з\'явы ці прадмета ў значэнні цэлага. (Ты павінен сам зарабляць сваю капейку)';
+	sentenses[1]='Паўтарэнне аднолькавых ці аднародных зычных у вершы, што прыдае яму асаблівую гукавую выразнасць (у вершаскладанні)';
+	sentenses[2]='Паўтарэнне аднолькавых ці аднародных галосных у вершы, што прыдае яму асаблівую гукавую выразнасць (у вершаскладанні)';
+	sentenses[3]='Паўтарэнне аднолькавых гукаў,  слоў ці выразаў у канцы вершаваных радкоў або строф';
+	sentenses[4]='Паўтарэнне аднолькавых гукаў,  слоў ці выразаў у пачатку вершаваных радкоў або строф';
+	sentenses[5]='Мастацкае азначэнне';
+	sentenses[6]='Трохскладовы памер антычнай метрыкі, які складаецца з аднаго доўга і двух наступных за ім кароткіх складоў. У сілаба-танічным вершаскладанні яму адпавядае стапа з першым націскным і двума ненаціскнымі складамі';
+	sentenses[7]='Трохскладовы памер антычнай метрыкі. У сілаба-танічным вершаскладанні яму адпавядае стапа з другім націскным і двума ненаціскнымі складамі';
+	sentenses[8]='Трохскладовы памер антычнай метрыкі. У сілаба-танічным вершаскладанні яму адпавядае стапа з двума ненаціскнымі складамі і трэцім націскным';
+	sentenses[9]='Двухскладовая стапа з другім націскным складам';
+	sentenses[10]='Двухскладовая стапа, у якой першы склад з’яўляецца націскным';
+	sentenses[11]='Такое супастаўленне двух прадметаў, з\'яў або паняццяў, у выніку якога сутнасць аднаго з іх вытлумачваецца праз сутнасць другога';
+	sentenses[12]='Мастацкае перабольшванне';
+	sentenses[13]='Мастацкае пераменшванне';
+	sentenses[14]='Невялікі вершаваны, алегарычны твор павучальна-гумарыстычнага ці сатырычнага характару. Жыццё чалавека адлюстроўваецца ў вобразах жывёл, раслін, рэчаў';
+	sentenses[15]='Зварот у мінулае';
+	sentenses[16]='Разнавіднасць метафары, якая заключаецца ў наданні чалавечых уласцівасцей рэчам, прадметам, з\'явам прыроды';
+	sentenses[17]='Перанясенне ўласцівасцей жывых істот на прадмет, абстрактныя паняцці, з\'явы прыроды, рэчы';
+	
+    
+    var answer=[];
+    answer[0]='сінекдаха';
+    answer[1]='алітэрацыя';
+    answer[2]='асананс';
+    answer[3]='эпіфара';
+    answer[4]='анафара';
+    answer[5]='эпітэт';
+    answer[6]='дактыль';
+    answer[7]='амфібрахій';
+    answer[8]='анапест';
+    answer[9]='ямб';
+    answer[10]='харэй';
+    answer[11]='параўнанне';
+    answer[12]='гіпербала';
+    answer[13]='літота';
+    answer[14]='байка';
+    answer[15]='рэтраспекцыя';
+    answer[16]='персаніфікацыя';
+    answer[17]='адухаўленне';
+	
+	var randSentensArr=[];
+	var randSentensArrCount=0;
+    
+    var randAns=[];
+    var randAns1=[];
+    var randAns2=[];
+    
+	while (randSentensArrCount<9){
+        var temp1=Math.floor(Math.random()*18)-1;
+		xy=sentenses[temp1];
+		var inArr=0;
+		for (var j=0;j<9;j++){
+			if (randSentensArr[j]==xy){
+				inArr=1;
+			}
+		}
+		if (inArr==0){
+			randSentensArr.push(xy);
+			randSentensArrCount++;
+            randAns.push(answer[temp1]);
+		}
+	}
+    var k1=0;
+    while (k1<randAns.length){
+        var tempEl=randAns[k1];
+        var tempArr=[];
+        for (var i=0;i<randAns.length;i++){
+            if (randAns[i]!=tempEl){
+                tempArr.push(randAns[i]);
+            }
+        }
+       
+        var j=Math.floor(Math.random()*100);
+        if (j>=50){
+            randAns1.push(tempEl);
+            randAns2.push(tempArr[Math.floor(Math.random()*tempArr.length)]);
+        }
+        else {
+            randAns2.push(tempEl);
+            randAns1.push(tempArr[Math.floor(Math.random()*tempArr.length)]);
+        }
+        k1+=1;
+    }
+     
+        
+	var blocks=document.getElementsByClassName("block");
+	var maxZindex=12;
+	var text=document.getElementById('QuestText');
+	var tBut=document.getElementById('tBut');
+	var fBut=document.getElementById('fBut');
+	
+	var currentQuest=0;
+	
+    var answer1=document.getElementById('AnswerText1');
+    var answer2=document.getElementById('AnswerText2');
+    
+    
+    
+	blocks[0].style.left=0+"px";blocks[0].style.top=0+"px";blocks[0].style.zIndex=3;
+	blocks[1].style.left=0+"px";blocks[1].style.top=201+"px";blocks[1].style.zIndex=4;
+	blocks[2].style.left=0+"px";blocks[2].style.top=402+"px";blocks[2].style.zIndex=5;
+	blocks[3].style.left=301+"px";blocks[3].style.top=0+"px";blocks[3].style.zIndex=6;
+	blocks[4].style.left=301+"px";blocks[4].style.top=201+"px";blocks[4].style.zIndex=7;
+	blocks[5].style.left=301+"px";blocks[5].style.top=402+"px";blocks[5].style.zIndex=8;
+	blocks[6].style.left=602+"px";blocks[6].style.top=0+"px";blocks[6].style.zIndex=9;
+	blocks[7].style.left=602+"px";blocks[7].style.top=201+"px";blocks[7].style.zIndex=10;
+	blocks[8].style.left=602+"px";blocks[8].style.top=402+"px";	blocks[8].style.zIndex=11;
+	
+	var currentBlock;
+	var currentX;
+	var currentY;	
+	var isShowBig=0;
+	
+	for (var i=0;i<9;i++){
+		blocks[i].onclick=function(){	
+               
+		text.style.transition='all 500ms linear';
+		tBut.style.transition='all 500ms linear';
+		fBut.style.transition='all 500ms linear';
+        answer1.style.transition='all 500ms linear';
+		answer2.style.transition='all 500ms linear';	
+				if ((this.title==1)&&(isShowBig==0)){
+				this.title=0;	
+				isShowBig=1;
+				currentBlock=this;
+				currentX=currentBlock.style.left;
+				currentY=currentBlock.style.top;
+				
+				blocks[0].style.zIndex=3;
+				this.style.backgroundImage="none";	
+				this.style.width=800+"px";
+				this.style.height=600+"px";
+				this.style.marginLeft=-this.style.width/2;
+				this.style.marginTop=-this.style.height/2;		
+				this.style.left=document.getElementById('main').style.left+25+"px";
+				this.style.top=document.getElementById('main').style.top+25+"px";
+				this.style.zIndex=maxZindex;
+				maxZindex++;
+				
+				text.innerText=randSentensArr[currentQuest];
+                answer1.innerText=randAns1[currentQuest];
+                answer2.innerText=randAns2[currentQuest];
+                answer1.style.top=390+"px";
+                answer2.style.top=390+"px";
+                
+				text.style.top=20+"%";
+				text.style.zIndex=maxZindex;
+				maxZindex++;
+				
+				tBut.style.top=500+"px";
+				tBut.style.zIndex=maxZindex;
+				fBut.style.top=500+"px";
+				fBut.style.zIndex=maxZindex;
+				maxZindex++;			
+				}	
+		}
+	} 
+var answerClick=function(xx1){
+    if (xx1==1){
+        if (randAns[currentQuest]==randAns1[currentQuest]){            
+            blockMove(1);
+        }
+        else {
+            blockMove(2);
+        }
+    }
+    if (xx1==2){
+        if (randAns[currentQuest]==randAns2[currentQuest]){            
+            blockMove(1);
+        }
+        else {
+            blockMove(2);
+        }
+    }
+}
+
+var blockMove=function(xx){	
+	if (xx==1){
+		currentBlock.style.left=105+"%";		
+	}
+	if (xx==2){
+		currentBlock.style.transition='all 0s linear';
+		text.style.transition='all 0s linear';
+		tBut.style.transition='all 0s linear';
+		fBut.style.transition='all 0s linear';
+		currentBlock.style.top=currentY;
+		currentBlock.style.left=currentX;
+		currentBlock.style.width=300+"px";
+		currentBlock.style.height=200+"px";
+		currentBlock.style.backgroundImage="url(backs/bad.png)";
+		currentBlock.style.zIndex=2;
+		currentBlock.title=0;
+		
+	}
+		text.style.top=-50+"%";
+		tBut.style.top=700+"px";
+		fBut.style.top=700+"px";
+        answer1.style.top=500+"px";
+        answer2.style.top=600+"px";
+		currentQuest++;
+		isShowBig=0;
+}	
+tBut.onclick=function(){answerClick(1)}	;
+fBut.onclick=function(){answerClick(2)};	
+</script>
+</html>

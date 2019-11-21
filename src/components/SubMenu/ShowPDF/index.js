@@ -17,6 +17,11 @@ class ShowPDF extends React.Component {
                     onClick = { ()=> this.props.BackToNPBMenu() }>
                     Вярнуцца да выбару дакумента
                 </button>
+                <button
+                    className = "ShowPDF_but2"
+                    onClick = { ()=> this.props.BackToMainMenu() }>
+                    Вярнуцца да галоўнага меню
+                </button>
             </div>
         )
     }
@@ -27,7 +32,8 @@ let mapState = ( state ) => ({
 })
 let mapDispatch = dispatch => {
     return {
-        BackToNPBMenu : () => dispatch ({ type : "SWITCH_TO_NPB_MENU" })
+        BackToNPBMenu : () => dispatch ({ type : "SWITCH_TO_NPB_MENU" }),
+        BackToMainMenu : () => dispatch ({ type : "MAIN_MENU"})      
     }
 }
 export default connect(mapState, mapDispatch) (ShowPDF);

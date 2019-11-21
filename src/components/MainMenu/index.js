@@ -22,7 +22,7 @@ class MainMenu extends React.Component {
                 ><p>Нарматыўна-прававая база</p></div>
              <div 
                 className = "But L n0"
-               //  onClick = {() => this.props.switchAnimMenu ()} 
+               onClick = {() => this.props.switchAnimMenu ()} 
                 ><p>Анімацыі</p></div>
              <div 
                 className = "But L n1"
@@ -70,7 +70,7 @@ const mapState = ( state ) => ({
 })
 const mapDispatch = dispatch => {
     return {
-      //   switchAnimMenu : () => dispatch({ type : 'SWITCH_TO_ANIM_MENU'}),
+        switchAnimMenu : () => dispatch({ type : 'SWITCH_TO_ANIM_MENU'}),
         switchNPBMenu : () => dispatch ({ type : 'SWITCH_TO_NPB_MENU'}),
       //   switchAudioMenu : () => dispatch ({ type : 'SWITCH_TO_AUDIO_MENU'}),
       //   switchGamesMenu : () => dispatch ({ type : 'SWITCH_TO_GAMES_MENU'}),
