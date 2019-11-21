@@ -9,6 +9,7 @@ import ShowPDF from './components/SubMenu/ShowPDF';
 import { connect } from 'react-redux';
 import AnimMenu from './components/Menus/AnimMenu';
 import ShowAnim from './components/SubMenu/ShowAnim';
+import TestsMenu from './components/Menus/TestsMenu';
 
 class App extends React.Component {
   showPage() {
@@ -19,6 +20,7 @@ class App extends React.Component {
       case 'ShowPDF' : comp = <ShowPDF />; break;
       case 'AnimMenu' : comp = <AnimMenu />; break;
       case 'ShowAnim' : comp = <ShowAnim />; break;
+      case 'TestsMenu' : comp = <TestsMenu />; break;
     }
     return comp;
   }

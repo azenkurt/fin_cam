@@ -12,13 +12,23 @@ let initRed = ( state = InitState, action) => {
             state = { ...state, curScreen : "NPB"};
             break;
         case "SHOW_PDF" :
-            state = {...state, curScreen : "ShowPDF", curPDF : action.fileName};
+            state = {...state, 
+                    curScreen : "ShowPDF", 
+                    curSub: action.sub, 
+                    curPDF : action.fileName,
+                    curOwner : action.owner};
             break;
         case "SWITCH_TO_ANIM_MENU" : 
             state = { ...state, curScreen : "AnimMenu"};
             break;
         case "SHOW_ANIM" :
-            state = {...state, curScreen : "ShowAnim", curANIM : action.fileName};
+            state = {...state, 
+                    curScreen : "ShowAnim", 
+                    curSub: action.sub, 
+                    curANIM : action.fileName};
+            break;
+        case "SWITCH_TO_TESTS_MENU" :
+            state = { ...state, curScreen : "TestsMenu"};
             break;
     }           
     return state;

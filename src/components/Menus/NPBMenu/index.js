@@ -55,7 +55,7 @@ const mapState = ( state ) => {
 }
 const mapDispatch = dispatch => {
     return {
-         ShowPDF : ( ff ) => dispatch({ type : "SHOW_PDF", fileName : ff}),
+         ShowPDF : ( ff ) => dispatch({ type : "SHOW_PDF", sub: 'npb' , fileName : ff, owner: 'NPBMenu'}),
          BackToMainMenu : () => dispatch ({ type : "MAIN_MENU"})        
     }
 }

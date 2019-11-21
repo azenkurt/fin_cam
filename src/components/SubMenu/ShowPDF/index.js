@@ -8,13 +8,13 @@ class ShowPDF extends React.Component {
         return (
             <div className = "PDF">
                 <embed 
-                    src = {"/pdf/npb/"+this.props.CurFile+".pdf"}
+                    src = {"/pdf/"+this.props.CurSub +"/" + this.props.CurFile+".pdf"}
                     width = "1000px"
                     height = "650px"
                     type = "application/pdf"></embed>
                 <button
                     className = "ShowPDF_but"
-                    onClick = { ()=> this.props.BackToNPBMenu() }>
+                    onClick = { ()=> this.props.BackToMenu( this.props.CurOwner ) }>
                     Вярнуцца да выбару дакумента
                 </button>
                 <button
@@ -28,11 +28,18 @@ class ShowPDF extends React.Component {
 }
 
 let mapState = ( state ) => ({
-    CurFile: state.curPDF
+    CurFile: state.curPDF,
+    CurSub : state.curSub,
+    CurOwner : state.curOwner
 })
 let mapDispatch = dispatch => {
     return {
-        BackToNPBMenu : () => dispatch ({ type : "SWITCH_TO_NPB_MENU" }),
+        BackToMenu : ( owner ) => {
+                switch ( owner ) {
+                    case 'NPBMenu' : dispatch ({ type : "SWITCH_TO_NPB_MENU" }); break;
+                    case 'TestsMenu' : dispatch ({ type : "SWITCH_TO_TESTS_MENU" }); break;
+                }                
+            },
         BackToMainMenu : () => dispatch ({ type : "MAIN_MENU"})      
     }
 }
