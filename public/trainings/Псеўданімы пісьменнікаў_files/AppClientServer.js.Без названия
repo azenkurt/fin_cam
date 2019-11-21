@@ -1,0 +1,4026 @@
+var AppClientSessionUserID = 0
+//////////////////////////////////////////////////////////////////////////////////
+// App Client JavaScript Library
+//  see http://LearningApps.org for further details
+//////////////////////////////////////////////////////////////////////////////////
+var AppClientTranslation = new Array();
+//////////////////////////////////////////////////////////////////////////////////
+function addAppClientTranslation(language,id,text){
+ var i = findAppClientTranslation(language,id);
+ if(i == -1){
+  var o = new Object();
+  o.language = language;
+  o.id = id;
+  o.text = text;
+  AppClientTranslation.push(o);
+ }else{
+  AppClientTranslation[i].text = text;
+ }
+}
+//////////////////////////////////////////////////////////////////////////////////
+function findAppClientTranslation(language,id){
+ if(!AppClientTranslation) AppClientTranslation = new Array();
+ for(var i=0; i < AppClientTranslation.length; i++){
+  var o = AppClientTranslation[i];
+  if(o.id == id && o.language == language) return i;
+ } 
+ return -1;
+}
+//////////////////////////////////////////////////////////////////////////////////
+function findAppClientTranslations(id){
+ if(!AppClientTranslation) AppClientTranslation = new Array();
+ var r = new Array();
+ for(var i=0; i < AppClientTranslation.length; i++){
+  var o = AppClientTranslation[i];
+  if(o.id == id) r.push(o);
+ } 
+ return r;
+}
+//////////////////////////////////////////////////////////////////////////////////
+function getAppClientTranslation(id,lang){
+ var language = AppClientLanguage;
+ if(lang) language = lang;
+ var i = findAppClientTranslation(language,id);
+ if(i != -1) return AppClientTranslation[i].text;
+ var i = findAppClientTranslation("EN",id); // fallback EN
+ if(i != -1) return AppClientTranslation[i].text;
+ return id;
+}
+//////////////////////////////////////////////////////////////////////////////////
+
+
+var AppClientLanguage = "RU";
+
+addAppClientTranslation("RU",
+                        "APPCLIENT_CHARACTERS","абвгдеёжзийклмнопрстуфхцчшщъыьэюя");
+addAppClientTranslation("RU",
+                        "APPCLIENT_FULLSCREEN","Показать упражнение в полноэкранном режиме.");
+addAppClientTranslation("RU",
+                        "APPCLIENT_HINTLINK","Показать задание");
+addAppClientTranslation("RU",
+                        "APPCLIENT_HELPLINK","Показать помощь");
+addAppClientTranslation("RU",
+                        "APPCLIENT_HELPDESCRIPTION","Помощь");
+addAppClientTranslation("RU",
+                        "APPCLIENT_TASKDESCRIPTION","Задание");
+addAppClientTranslation("RU",
+                        "APPCLIENT_GIVEPARAM","Задайте ценность параметров");
+addAppClientTranslation("RU",
+                        "APPCLIENT_CONNECTIONLOST","Соединение с сервером было разорвано. Устанавливается новое соединение .");
+
+addAppClientTranslation("RU",
+                        "APPCLIENT_VIDEODELTED","Данное видео не существует или еще не опубликовано.");
+addAppClientTranslation("RU",
+                        "APPCLIENT_VIDEOFORBIDDEN","Автор видео запретил использовать это видео или аудио.");
+addAppClientTranslation("RU",
+                        "APPCLIENT_VIDEOWRONGURL","Адрес данного видео неверен");
+
+addAppClientTranslation("RU",
+                        "APPCLIENT_READSPEECH","читать вслух");
+
+//////////////////////////////////////////////////////////////////////////////////
+var AppClientInstance = null;
+var AppClientConnection = null;
+var AppClientSharedList = new Array();
+var AppClientServerProtocol = "http:";
+//var AppClientSessionUserID = 0; will be set by php
+//////////////////////////////////////////////////////////////////////////////////
+if(window.location.protocol.match("https")) AppClientServerProtocol = "https:";
+if(window.location.protocol.match("file"))  AppClientServerProtocol = "http:";
+
+//////////////////////////////////////////////////////////////////////////////////
+loadCSS(AppClientServerProtocol+"//learningapps.org/frameworks/LearningApps.css?2");
+
+if(getURLParam("css") != "") 
+   setTimeout(function(){loadCSS(decodeURIComponent(getURLParam("css")),null,true);},50);
+if(getURLParam("cssString") != "")
+   setTimeout(function(){loadCSSString(decodeURIComponent(getURLParam("cssString")),true);},50);
+//////////////////////////////////////////////////////////////////////////////////
+function guid() {
+  function S4() {
+   return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+  };
+  return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
+}
+
+function getCurrentTime(){
+  var d = new Date();
+  return d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+}
+
+if(!Array.prototype.indexOf) {
+    Array.prototype.indexOf = function(needle) {
+        for(var i = 0; i < this.length; i++) {
+            if(this[i] === needle) {
+                return i;
+            }
+        }
+        return -1;
+    };
+}
+//////////////////////////////////////////////////////////////////////////////////
+// Shared Objects
+//////////////////////////////////////////////////////////////////////////////////
+function AppClientSharedObject(name) {
+  for (var z = 0; z < AppClientSharedList.length; z++) {
+    var soex = AppClientSharedList[z];
+    if (soex.Name == name) return soex; // already exists in this frame
+  }
+  var p = window;
+  while(p){
+   if (p && p.frames && p.frames.length > 0) {
+    for (var i = 0; i < p.frames.length; i++) {
+      var frame;
+      try {
+        frame = p.frames[i];
+        if(frame.className.indexOf("no-shared-objects")) continue;
+        if (!frame.AppClientSharedList) continue;
+        var test = frame.AppClientSharedList.length;
+      } catch (e) {
+        continue;
+      }
+      for (var z = 0; z < frame.AppClientSharedList.length; z++) {
+        var soex = frame.AppClientSharedList[z];
+        if (soex.Name == name) return soex; // so = soex; // already exists
+      }
+    }
+   }
+   if(p == top) break;
+   p = p.parent;
+  }
+  var so = new Object();
+  so.Name = name;
+  AppClientSharedList.push(so);
+  return so;
+}
+//////////////////////////////////////////////////////////////////////////////////
+// AppClientsocket
+//////////////////////////////////////////////////////////////////////////////////
+function AppClientsocket(connectionType) {
+  this.transmitMessageIndex = 0;
+  this.type = connectionType;
+  this.datetime = new Date();
+  this.localdatetime = new Date();
+  this.transmitStack = new Array();
+  this.sendStackArray = new Array();
+  this.AppStates = new Array();
+  this.AppStateIDs = new Array();
+  this.Participants = new Array();
+  this.uid = guid();
+  this.flash = null;
+  this.ajaxError = false;
+  this.ajaxConnected = false;
+  this.ajaxUnused = false;
+  this.pollingDone = false;
+  this.pollingInterval = null;
+  this.pollingRequest = false;
+  this.polling = function () {
+    if (AppClientConnection.socket.ajaxConnected && AppClientConnection.socket.pollingDone) {
+      AppClientConnection.socket.pollingDone = false;
+      AppClientConnection.socket.activatePolling();
+    }
+    setTimeout(function(){AppClientConnection.socket.polling();},500);
+  }
+  this.transmitData = function (data) {
+    this.transmitMessageIndex++;
+    if (this.type == "ajax") {
+      this.transmitStack.push(data);
+      setTimeout(function(){AppClientConnection.socket.sendTransmitStack();},1);
+    }
+    if (this.type == "local") {
+      var s = data.split("|");
+      if (s[0] == "REGISTER") {
+        if(typeof(Storage)!=="undefined" && localStorage && localStorage["AppClient_"+s[1]]){
+         AppClientConnection.socket.AppStates[s[1]] = localStorage["AppClient_"+s[1]];
+        }
+        AppClient_incomingData("INITAPPSTATE|" + s[1] + "|" + this.AppStates[s[1]]);
+        AppClient_incomingData("REGISTERED|" + s[1] + "|" + s[2]+ "|" + new Date());
+        var p = AppClientConnection.socket.Participants[s[1]];
+        p = (p ? (p + (p != "" ? "|" : "") + s[2]) : s[2]);
+        AppClientConnection.socket.Participants[s[1]] = p;
+        for (var i = 0; i < AppClientConnection.clients.length; i++)
+         if (AppClientConnection.clients[i].isReady) {
+             AppClient.console(getCurrentTime()+":USERJOINED: "+s[2]+ " ("+AppClientConnection.clients[i].username+")");
+             if (AppClientConnection.clients[i]._onUserJoined != null) 
+                 AppClientConnection.clients[i]._onUserJoined(s[2]);
+             if (AppClientConnection.clients[i].onUserJoined != null) 
+                 AppClientConnection.clients[i].onUserJoined(s[2]);
+         }
+        
+        AppClient_incomingData("APPSTATE|" + s[1] + "|" + this.AppStates[s[1]]);
+      }
+      if (s[0] == "SEND") {
+        AppClient.console(getCurrentTime()+":MESSAGE: "+decodeURIComponent(s[3])+" ("+s[4]+" -> "+s[2]+")");
+        var msg = decodeURIComponent(s[3]);
+        if(msg != "" && msg.indexOf("#__") == 0) msg = JSON.parse(msg.replace("#__",""));
+
+        for (var i = 0; i < AppClientConnection.clients.length; i++) {
+          if (s[2] == '*' || s[2] == AppClientConnection.clients[i].username) {
+            if (AppClientConnection.clients[i]._onMessage != null) AppClientConnection.clients[i]._onMessage(msg,s[4]);
+            if (AppClientConnection.clients[i].onMessage != null) AppClientConnection.clients[i].onMessage(msg,s[4]);
+          }
+        }
+      }
+      if (s[0] == "GETAPPSTATE") {
+        AppClient_incomingData("APPSTATE|" + s[1] + "|" + this.AppStates[s[1]]);
+      }
+      if (s[0] == "SETAPPSTATE") {
+        AppClient_incomingData("CHANGEAPPSTATE|" + s.slice(1).join("|"));
+      }
+    }
+  }
+  this.sendTransmitStack = function () {
+   var params = "r="+Math.random()+"&uid=" + this.uid;
+   if (!AppClientConnection.socket.ajaxConnected) {
+    // send empty data and try later
+    params += "&data0=";
+    window.setTimeout(function(){ AppClientConnection.socket.sendTransmitStack(); }, 500);
+    //return;
+   }else{
+    for(var i = 0; i < this.transmitStack.length; i++){
+     params += "&data"+i+"="+encodeURIComponent(this.transmitStack[i]);
+    }
+    this.transmitStack = new Array();
+   }
+   var xmlHttpReq = false;
+   if (window.XMLHttpRequest) xmlHttpReq = new XMLHttpRequest();
+   else if (window.ActiveXObject) xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
+   xmlHttpReq.open('POST', AppClientServerProtocol+"//learningapps.org/AJAXClient", true); 
+   xmlHttpReq.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+   xmlHttpReq.withCredentials = true;
+   xmlHttpReq.onreadystatechange = function () {
+    if (xmlHttpReq.readyState == 4) {
+     if (xmlHttpReq.status >= 400) {
+      if (!AppClientConnection.socket.ajaxError) AppClient_tryreconnect();
+           AppClientConnection.socket.ajaxError = true;
+     }
+     if (xmlHttpReq.status == 200) AppClientConnection.socket.ajaxError = false;
+     if (xmlHttpReq.responseText != "") AppClient_incomingData(xmlHttpReq.responseText);
+    }
+   };
+   xmlHttpReq.send(params);
+  }
+  this.activatePolling = function () {
+    this.pollingRequest = false;
+    if (window.XMLHttpRequest) this.pollingRequest = new XMLHttpRequest();
+    else if (window.ActiveXObject) this.pollingRequest = new ActiveXObject("Microsoft.XMLHTTP");
+    var params = "r="+Math.random()+"&poll=1&uid=" + this.uid + "&data=";
+    this.pollingRequest.open('POST', AppClientServerProtocol+"//learningapps.org/AJAXClientPoll", true); 
+    this.pollingRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+    this.pollingRequest.withCredentials = true;
+    var s = this;
+    this.pollingRequest.onerror = function (){
+    };
+    this.pollingRequest.onreadystatechange = function () {
+      if (AppClientConnection.socket.pollingRequest.readyState == 4) {
+        if (AppClientConnection.socket.pollingRequest.status >= 400) {
+          if (!AppClientConnection.socket.ajaxError) AppClient_tryreconnect();
+          AppClientConnection.socket.ajaxError = true;
+        }
+        AppClientConnection.socket.pollingDone = true;
+        if (AppClientConnection.socket.pollingRequest.status == 200) 
+            AppClientConnection.socket.ajaxError = false;
+        if (AppClientConnection.socket.pollingRequest.responseText != "") {
+            AppClient_incomingData(AppClientConnection.socket.pollingRequest.responseText);
+        }
+      }
+    };
+    this.pollingRequest.send(params);
+  }
+  this.send = function (data) {
+    if (this.type == "local") {
+      window.setTimeout(function(){ AppClientConnection.socket.transmitData (data); }, 150);
+    }
+    if (this.type == "ajax") {
+      if (this.ajaxUnused){
+        this.uid = guid();
+        this.init();
+      }
+      this.transmitData(data);
+    }
+  }
+
+  this.registerClient = function (showid, username) {
+    var isThere = false;
+    this.AppStates[showid] = "";
+    for (var i = 0; i < this.AppStateIDs.length; i++) {
+      if (this.AppStateIDs[i] == showid) {
+        isThere = true;
+        break;
+      }
+    }
+    if (!isThere) this.AppStateIDs.push(showid);
+    this.send("REGISTER|" + showid+(username ? "|"+username :""));
+  }
+  this.setAppSolved = function(showid,value,startTime){
+    var t = Math.abs(new Date() - startTime);
+    this.send("SOLVED|" + showid + "|" + value + "|" + t + "|" + AppClientSessionUserID);
+  }
+  this.getUsers = function (showid) {
+    if (!this.Participants[showid] || this.Participants[showid] == "undefined") return new Array();
+    return this.Participants[showid].split("|");
+  }
+  this.setAppStateDelta = function (showid, delta) {
+    var a = this.getAppState(showid);
+    var r = "";
+    for (var param in delta) {
+      var same = false;
+      if (param == "") continue;
+      for (var i = 0; i < a.length; i++)
+      if (a[i].name == param && a[i].value == delta[param]) {
+        same = true;
+        break;
+      }
+      if (!same) r += "|" + param + "|" + encodeURIComponent(delta[param]);
+    }
+    if (r != "") this.send("SETAPPSTATE|" + showid + r);
+  }
+  this.getAppState = function (showid) {
+    var a = new Array();
+    if (this.AppStates[showid] == null) return a;
+    var s = this.AppStates[showid];
+    var ar = s.split("|");
+    for (i = 0; i < ar.length; i++) {
+      var d = ar[i].split("=");
+      var o = new Object();
+      o.name = d[0];
+      o.value = decodeURIComponent(d[1]);
+      if(o.name) a.push(o);
+    }
+    return a;
+  }
+  this.sendMessage = function (showID, to, msg, sender) {
+    if(typeof msg != "string" && typeof msg != "number" && typeof msg != "boolean") msg = '#__'+JSON.stringify(msg);
+    this.send("SEND|" + showID + "|" + to + "|" + encodeURIComponent(msg) + "|" + sender);
+  }
+  this.windowUnload = function (){
+   var firstClient = false;
+   for(var i=0; i < AppClientSharedList.length; i++){
+    if(AppClientSharedList[i].Name == "AppClientConnection") firstClient = true;
+   }
+   if(!firstClient) return;
+   var r;
+   if (window.XMLHttpRequest) r = new XMLHttpRequest();
+   else if (window.ActiveXObject) r = new ActiveXObject("Microsoft.XMLHTTP");
+   r.open('POST', AppClientServerProtocol+"//learningapps.org/AJAXClient", false);
+   r.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+   var params = "r="+Math.random()+"&uid="+AppClientConnection.socket.uid+"&unload=1";
+   r.send(params);
+   return; // void
+  }
+  this.init = function () {
+    if (this.type == "ajax") {
+      this.ajaxUnused = false;
+      this.firstInit = true;
+      this.pollingDone = true;
+      this.transmitData("");
+      if(window.addEventListener) window.addEventListener("beforeunload",this.windowUnload);
+      if(window['attachEvent']) window.attachEvent("onbeforeunload",this.windowUnload);
+      if(window.addEventListener) window.addEventListener("unload",this.windowUnload);
+      if(window['attachEvent']) window.attachEvent("onunload",this.windowUnload);
+    }
+  }
+  this.reconnect = function () {
+    for (var i = 0; i < this.AppStateIDs.length; i++) {
+      var p = this.Participants[this.AppStateIDs[i]];
+      if (!p) continue;
+      var pa = p.split("|");
+      for (var pi = 0; pi < pa.length; pi++) {
+        var clientname = pa[pi];
+        AppClient_userLeft(this.AppStateIDs[i], clientname);
+      }
+    }
+    this.AppStates = new Array();
+    this.AppStateIDs = new Array();
+    this.Participants = new Array();
+    this.sendStackArray = new Array();
+    for (var i = 0; i < AppClientConnection.clients.length; i++)
+     this.registerClient(AppClientConnection.clients[i].showID);
+  }
+  return this;
+}
+//////////////////////////////////////////////////////////////////////////////////
+// App Client
+//////////////////////////////////////////////////////////////////////////////////
+function AppClientClass(showID, local) {
+  AppClientInstance = this;
+  var self = this;
+  this.userID = AppClientSessionUserID;
+  this.showID = showID;
+  this.isReady = false;
+  this.isLocal = local == true;
+  this.username = "";
+  this.registered = false;
+  this.isSolved = false;
+  this.isFullscreenFailed = false;
+  this.parametersJSON = null;
+  this.randomizer = new AppClient_Randomizer(showID);
+  this.random = function(){
+   if(arguments.length > 0) return Math.floor(self.randomizer.random()*arguments[0]);
+   return self.randomizer.random();
+  }
+
+  this.loadAppDataFromServer = function(){
+   var paramRequest = null;
+   if (window.XMLHttpRequest) this.paramRequest = new XMLHttpRequest();
+   else if (window.ActiveXObject) this.paramRequest = new ActiveXObject("Microsoft.XMLHTTP");
+   // synchrone call - ensure data is available before continue
+   var version = getURLParam("version");
+   this.paramRequest.open('GET', AppClientServerProtocol+"//"+"learningapps.org/data?id="+this.showID+"&version="+version, false);
+   this.paramRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+   var s = this;
+   this.paramRequest.onerror = function (){ };
+   this.paramRequest.onreadystatechange = function () {
+    if (s.paramRequest.readyState == 4) {
+     s.parametersJSON = JSON.parse(s.paramRequest.responseText);
+    }
+   };
+   this.paramRequest.send("");
+  }
+
+  this.init = function () {
+    if(!local){
+     this.loadAppDataFromServer();
+     if(this.parametersJSON.result == "SUCCESS") { // app with this GUID  found 
+      this.AppParams = this.parametersJSON.initparameters.split("&");
+      if(AppClientServerProtocol == "https:")
+        for(var i=0; i < this.AppParams.length; i++)
+          this.AppParams[i] = this.AppParams[i].replace(/http%3A%2F%2Fdbimg\.eu/g,"https%3A%2F%2Fdbimg.eu");
+
+      this.AppPath = this.parametersJSON.path;
+      this.Tool = this.parametersJSON.tool;
+      this.Task = this.parametersJSON.tasktext;
+      this.Help = this.parametersJSON.helptext;
+      this.Title = this.parametersJSON.title;
+
+      for(var i = 0; i < this.parametersJSON.translation.length; i++){ 
+       var trans = this.parametersJSON.translation[i];
+       addAppClientTranslation(trans.language,trans.id,trans.value);
+      }
+     }
+    }
+
+    AppClientConnection = AppClientSharedObject("AppClientConnection");
+    this.showLoadingPanel();
+    if (!AppClientConnection.isReady) {
+     AppClientConnection.isReady = true;
+     AppClientConnection.client = this;
+     AppClientConnection.clients = new Array();
+     AppClientConnection.clients.push(this);
+     if (local == true) {
+      AppClientConnection.socket = new AppClientsocket("local");
+      AppClientConnection.socket.init();
+     } else {
+      AppClientConnection.socket = new AppClientsocket("ajax");
+      AppClientConnection.socket.init();
+     }
+    } else {
+     // client exists just add us
+     AppClientConnection.clients.push(this);
+    }
+    this.isReady = true;
+    if (local != true) AppClientConnection.socket.registerClient(this.showID);
+    if(getURLParam("script") != "") loadScript(decodeURIComponent(getURLParam("script")));
+  }
+  this.getURLParam = function(n){
+   return getURLParam(n); // global function
+  }
+  this.console = function (s){
+   if (typeof console == "object" && getURLParam("debug") == "1") console.log(s);
+  }
+  this.getTranslation = function () {
+    var id = arguments[0];
+    var v = getAppClientTranslation(id);
+    if (arguments.length > 1) v = getAppClientTranslation(id, arguments[1]);
+    return v;
+  }
+  this.getServerDateTime = function () {
+    var div = (AppClientConnection.socket.localdatetime - AppClientConnection.socket.datetime);
+    return new Date(new Date() - div);
+  }
+  this.getLanguageCharacters = function (){
+    var v = getAppClientTranslation("APPCLIENT_CHARACTERS");
+    v = v + v.toUpperCase();
+    var a = v.split("");
+    var b = new Array();
+    var casetype = "all";
+    if (arguments.length > 0)casetype = arguments[0]; 
+    if(casetype == "upper")
+     for(var i = 0; i < a.length; i++) if(a[i] == a[i].toUpperCase()) b.push(a[i]);
+    if(casetype == "lower")
+     for(var i = 0; i < a.length; i++) if(a[i] == a[i].toLowerCase()) b.push(a[i]);
+    if(casetype == "all")c
+     for(var i = 0; i < a.length; i++) b.push(a[i]);
+    return b;
+  }
+
+  this.isTranslationOf = function (id, txt) {
+    var r = findAppClientTranslations(id);
+    for (var i = 0; i < r.length; i++) {
+      if (r[i].text == txt) return true;
+    }
+    return false;
+  }
+
+  this.isMobileDevice = function () {
+    return isTierIphone || isTierTablet;
+  }
+  this.addNavigationButtons = function () {
+    var d = document.getElementById('AppClientTaskButton');
+    if (d) return;
+    var body = document.getElementsByTagName("body");
+    if (body.length == 0) {
+      setTimeout("AppClient.addNavigationButtons()", 1);
+      return;
+    }
+    var posX = 0;
+    newdiv = document.createElement("div");
+    newdiv.id = "AppClientTaskButton";
+    newdiv.style.position = "fixed";
+    newdiv.style.width = "16px";
+    newdiv.style.left = posX+"px";
+    newdiv.style.top = "0px";
+    newdiv.style.zIndex = "999997";
+    if (AppClient.Task == "") newdiv.style.display = "none"; else posX += 20;
+    newdiv.innerHTML = '<a style="padding:0px; margin:0px; text-decoration:none; font-size:16px" href="JavaScript:AppClient.showTaskPanel()"><img border="0" style="vertical-align:top" src="'+AppClientServerProtocol+'//learningapps.org/style/taskicon.gif" title="' + this.getTranslation("APPCLIENT_HINTLINK") + '" alt="" /></a>';
+    document.body.appendChild(newdiv);
+
+    newdiv = document.createElement("div");
+    newdiv.id = "AppClientHelpButton";
+    newdiv.style.position = "fixed";
+    newdiv.style.width = "16px";
+    newdiv.style.left = posX+"px";
+    newdiv.style.top = "0px";
+    newdiv.style.zIndex = "999997";
+    if (AppClient.Help == "") newdiv.style.display = "none";
+    newdiv.innerHTML = '<a style="padding:0px; margin:0px; text-decoration:none; font-size:16px" href="JavaScript:AppClient.showHelpPanel()"><img border="0" style="vertical-align:top" src="'+AppClientServerProtocol+'//learningapps.org/style/helpicon.png" title="' + this.getTranslation("APPCLIENT_HELPLINK") + '" alt="" /></a>';
+    document.body.appendChild(newdiv);
+
+    if (getURLParam("fullscreen") == "1") return; // already in fullscreen
+    newdiv = document.createElement("div");
+    newdiv.id = "AppClientFullscreenButton";
+    newdiv.style.position = "fixed";
+    newdiv.style.width = "16px";
+    newdiv.style.right = "0px";
+    newdiv.style.top = "0px";
+    newdiv.style.zIndex = "999997";
+    newdiv.innerHTML = '<a style="padding:0px; margin:0px; text-decoration:none; font-size:16px" href="/watch?v=' + this.showID + '" onclick="return AppClient.doFullscreen()" target="_blank"><img border="0" style="vertical-align:top" src="'+AppClientServerProtocol+'//learningapps.org/style/fullscreenicon.png" title="' + this.getTranslation("APPCLIENT_FULLSCREEN") + '" alt="" /></a>';
+    document.body.appendChild(newdiv);
+  }
+  this.checkFullscreen = function () {
+    var d = document;
+    if(window != top){
+     d = window.parent.document;
+    }
+    var isFullScreen = d.mozFullScreen || d.webkitIsFullScreen;
+    this.isFullscreenFailed = (!isFullScreen);
+  }
+  this.doFullscreen = function () {
+    var d = document;
+    if(window != top){
+     d = window.parent.document;
+    }
+    var isFullScreen = d.mozFullScreen || d.webkitIsFullScreen;
+    if (isFullScreen) {
+      this.isFullscreenFailed = false;
+      if (d.exitFullscreen) {
+        d.exitFullscreen();
+      } else if (d.cancelFullScreen) {
+        d.cancelFullScreen();
+      } else if (d.mozCancelFullScreen) {
+        d.mozCancelFullScreen();
+      } else if (d.webkitCancelFullScreen) {
+        d.webkitCancelFullScreen();
+      }else 
+      return false;
+    }
+    if (this.isFullscreenFailed) return true;
+    var docElm = d.documentElement;
+    if (docElm.requestFullscreen) {
+      docElm.requestFullscreen();
+      setTimeout("AppClient.checkFullscreen()", 1000);
+      return false;
+    } else if (docElm.mozRequestFullScreen) {
+      docElm.mozRequestFullScreen();
+      setTimeout("AppClient.checkFullscreen()", 1000);
+      return false;
+    } else if (docElm.webkitRequestFullScreen) {
+      docElm.webkitRequestFullScreen();
+      docElm.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);  
+      setTimeout("AppClient.checkFullscreen()", 1000);
+      return false;
+    }
+    return true;
+  }
+  this.checkSolution = function(){
+    if(typeof window.checkSolution == "function") return checkSolution();
+  }
+  this.showLoadingPanel = function () {
+    var body = document.getElementsByTagName("body");
+    if (body.length == 0) {
+      setTimeout("AppClient.showLoadingPanel()", 1);
+      return;
+    }
+    document.body.style.overflowWrap = "break-word";
+    newdiv = document.createElement("div");
+    newdiv.id = "AppClientLoadingPanel";
+    newdiv.style.position = "absolute";
+    newdiv.style.width = "100%";
+    newdiv.style.height = "100%";
+    newdiv.style.left = "0px";
+    newdiv.style.top = "0px";
+    newdiv.style.boxSizing = "border-box";
+    newdiv.style.zIndex = "999999";
+    newdiv.style.backgroundColor = "#FFFFFF";
+    newdiv.innerHTML = '<table style="box-sizing:border-box; width:100%;height:100%"><tr><td width="100%" align="center" style="color:#333;font-family:Arial;" id="LoadingPanelContent"><img src="'+AppClientServerProtocol+'//learningapps.org/style/loading.gif" alt="" style="vertical-align:middle;margin:5px"/> <b> Loading ... </b></td></tr></table>';
+    document.body.appendChild(newdiv);
+    this.loadingPanel = newdiv;
+  }
+  this.taskPanelshowed = false;
+  this.closeTaskPanel = function(){
+    document.getElementById('AppClientTaskPanel').style.display = 'none'; 
+  };
+  this.showTaskPanel = function (once) {
+    var body = document.getElementsByTagName("body");
+    if (body.length == 0) {
+      setTimeout("AppClient.showTaskPanel(" + (once ? "true" : "false") + ")", 100);
+      return;
+    }
+    if (once) {
+      if (this.taskPanelshowed) return;
+      this.taskPanelshowed = true;
+    }
+    if (AppClient.Task == "") {
+      if (document.getElementById('AppClientTaskButton')) document.getElementById('AppClientTaskButton').style.display = "none";
+      return;
+    }
+    if (this.taskPanel) {
+      if (document.getElementById('AppClientTaskPanel')) document.getElementById('AppClientTaskPanel').style.display = "block";
+      return;
+    }
+    if (document.getElementById('AppClientTaskButton')) document.getElementById('AppClientTaskButton').style.display = "block";
+    newdiv = document.createElement("div");
+    newdiv.id = "AppClientTaskPanel";
+    newdiv.style.boxSizing = "border-box";
+    newdiv.style.fontFamily = "Arial";
+    newdiv.style.position = "absolute";
+    newdiv.style.width = "40%";
+    newdiv.style.left = "0";
+    newdiv.style.marginLeft = "30%";
+    newdiv.style.marginRight = "30%";
+    newdiv.style.top = "20%";
+    newdiv.style.maxHeight = "65%";
+    newdiv.style.overflow = "auto";
+    newdiv.style.zIndex = "999998";
+    newdiv.style.padding = "10px";
+    newdiv.style.border = "10px solid #ddd";
+    newdiv.style.WebkitBoxShadow = "0px 0px 10px #333";
+    newdiv.style.MozBoxShadow = "0px 0px 10px #333";
+    newdiv.style.boxShadow = "0px 0px 10px #333";
+    newdiv.style.WebkitBorderRadius = "10px";
+    newdiv.style.MozBorderRadius = "10px";
+    newdiv.style.borderRadius = "10px";
+    newdiv.style.backgroundColor = "#FFFFFF";
+    newdiv.innerHTML = '<p style="text-align:center;font-size:150%;padding:0px;margin:0px;margin-bottom:5px"><b>' + this.getTranslation("APPCLIENT_TASKDESCRIPTION") + '</b></p><div style="max-height:195px;overflow:auto;'+(AppClient.Task.length < 50 ? 'text-align:center':'')+'">' + ((this.linkifyText((AppClient.Task))).replace(/\n/g, "<br>")) + '</div><div style="margin-top:10px;text-align:center"><button type="button" onclick="AppClient.closeTaskPanel()" style="font-size:120%;">OK</div>';
+    document.body.appendChild(newdiv);
+    this.taskPanel = newdiv;
+  }
+  this.showHelpPanel = function () {
+    var body = document.getElementsByTagName("body");
+    if (body.length == 0) {
+      setTimeout("AppClient.showHelpPanel()", 100);
+      return;
+    }
+    if (AppClient.Help == "") {
+      if (document.getElementById('AppClientHelpButton')) document.getElementById('AppClientHelpButton').style.display = "none";
+      return;
+    }
+    if (this.helpPanel) {
+      if (document.getElementById('AppClientHelpPanel')) document.getElementById('AppClientHelpPanel').style.display = "block";
+      return;
+    }
+    if (document.getElementById('AppClientHelpButton')) document.getElementById('AppClientHelpButton').style.display = "block";
+    newdiv = document.createElement("div");
+    newdiv.id = "AppClientHelpPanel";
+    newdiv.style.fontFamily = "Arial";
+    newdiv.style.position = "absolute";
+    newdiv.style.width = "40%";
+    newdiv.style.left = "0";
+    newdiv.style.marginLeft = "30%";
+    newdiv.style.marginRight = "30%";
+    newdiv.style.top = "20%";
+    newdiv.style.maxHeight = "60%";
+    newdiv.style.overflow = "auto";
+    newdiv.style.zIndex = "999997";
+    newdiv.style.padding = "10px";
+    newdiv.style.border = "10px solid #ddd";
+    newdiv.style.WebkitBoxShadow = "0px 0px 10px #333";
+    newdiv.style.MozBoxShadow = "0px 0px 10px #333";
+    newdiv.style.boxShadow = "0px 0px 10px #333";
+    newdiv.style.WebkitBorderRadius = "10px";
+    newdiv.style.MozBorderRadius = "10px";
+    newdiv.style.borderRadius = "10px";
+    newdiv.style.backgroundColor = "#FFFFFF";
+    newdiv.innerHTML = '<p style="text-align:center;font-size:150%;padding:0px;margin:0px;margin-bottom:5px"><b>' + this.getTranslation("APPCLIENT_HELPDESCRIPTION") + '</b></p><div style="max-height:200px;overflow:auto">' + ((this.linkifyText((AppClient.Help))).replace(/\n/g, "<br>")) + '</div><br/><center><input type="button" onclick="document.getElementById(\'AppClientHelpPanel\').style.display = \'none\';" style="font-size:120%" value="OK"/>';
+    document.body.appendChild(newdiv);
+    this.helpPanel = newdiv;
+  }
+  this.getFilePath = function (file) {
+    return this.AppPath + file;
+  }
+  this.getParam = function (name) {
+    for (var i = 0; i < this.AppParams.length; i++) {
+      var s = this.AppParams[i];
+      var sp = s.split("=");
+      if (decodeURIComponent(sp[0]) != name) continue;
+      if (this.getParameterType(name) != "undefined") {
+        var a = decodeURIComponent(sp[1]).split("|");
+        return decodeURIComponent(sp[1]).substring(a[0].length + 1);
+      }
+      return decodeURIComponent(sp[1]);
+    }
+    return "";
+  }
+  this.getParameterType = function (name) {
+    for (var i = 0; i < this.AppParams.length; i++) {
+      var s = this.AppParams[i];
+      var sp = s.split("=");
+      if (decodeURIComponent(sp[0]) != name) continue;
+      var a = decodeURIComponent(sp[1]).split("|");
+      if (a.length > 1) {
+        if (a[0] == "text") return a[0];
+        if (a[0] == "video") return a[0];
+        if (a[0] == "image") return a[0];
+        if (a[0] == "audio") return a[0];
+        if (a[0] == "speech") return a[0];
+      }
+    }
+    return "undefined";
+  }
+  this.getParameter = function () {
+    var name = arguments[0];
+    var v = this.getParam(name);
+    if ((this.isLocal) && v == "") {
+      if (arguments.length == 2) v = arguments[1];
+      else v = prompt(this.getTranslation("APPCLIENT_GIVEPARAM") + " " + name, "");
+      if (v == null) v = "";
+      if (v == "") return "";
+      this.AppParams.push(encodeURIComponent(name) + "=" + encodeURIComponent(v));
+      return this.getParam(name);
+      return v;
+    }
+    return v;
+  }
+
+  this.getParameters = function (name){
+   function AppClientParameterList() { }
+   AppClientParameterList.prototype = Array.prototype;
+   AppClientParameterList.prototype.find = function (name){
+     if(typeof name == "undefined") return this;
+     // find exact match
+     for(var i=0; i < this.length; i++){
+      if(this[i] instanceof Array) {
+       for(var z=0; z < this[i].length; z++)
+        if(this[i][z].name == name) return this[i][z];
+      }else 
+       if(this[i].name == name) return this[i];
+     }
+     var a = new AppClientParameterList();
+     // find list xmlName match
+     for(var i=0; i < this.length; i++){
+      if(this[i] instanceof Array) {
+       for(var z=0; z < this[i].length; z++)
+        if(this[i][z].xmlName == name) a.push(this[i][z]);
+      }else 
+       if(this[i].xmlName == name) a.push(this[i]);
+     }
+     if(a.length > 0) return a;
+     // find list with name
+     for(var i=0; i < this.length; i++){
+      if(this[i] instanceof Array) {
+       for(var z=0; z < this[i].length; z++)
+        if(this[i][z].list && this[i][z].list.name == name) a.push(this[i][z]);
+      }else
+       if(this[i].list && this[i].list.name == name) a.push(this[i]);
+     }
+     return a;
+   };
+   AppClientParameterList.prototype.remove = function (i){
+    return this.splice(i,1);
+   };
+   AppClientParameterList.prototype.groupByListIndex = function(){
+     // find list with name
+     var a = new AppClientParameterList();
+     for (var z = 1; z <= 100; z++){
+      var part = []; 
+      for(var i=0; i < this.length; i++){
+       if(this[i] instanceof Array) {
+        for(var x=0; x < this[i].length; x++)
+         if(this[i][x].list && this[i][x].list.index == z) part.push(this[i][x]);
+       } else
+        if(this[i].list && this[i].list.index == z) part.push(this[i]);
+      }
+      if(part.length > 0) a.push(part);
+     }
+     return a;
+   };
+
+
+   var params = null;
+
+   if(this.getParametersPrevious == null){
+    params = new AppClientParameterList();
+    // read parameter types from XML file
+    function parseParameterTypes (p,params,lists){
+      function replaceListIndex (s){
+        for (var i= 0; i < lists.length; i++) s = s.replace("#",lists[i].index);
+        for (var i= lists.length-1; i >= 0; i--) s = s.replace("$",lists[i].index);
+        return s;
+      }
+
+      if(p.t == "parameter"){
+       var para = new Object();
+       para.name = replaceListIndex(p.name);
+       para.xmlName = p.name;
+       para.xmlValue = "";
+       para.value = "";
+       para.type = p.type;
+       if(lists.length > 0) para.list = lists[lists.length-1];
+       para.isEqual = function(v){
+        if(v && typeof v.xmlValue !== "undefined") return v.xmlValue == this.xmlValue;
+        return this.value == v;
+       };
+
+       params.push(para);
+      }
+      if(p.t == "group") for(var z = 0; z < p.children.length; z++) parseParameterTypes(p.children[z],params,lists);
+      if(p.t == "list")
+        for(var i = 1; i <= p.max; i++){
+          var clone = lists.slice(0);
+          clone.push({index:i, name:replaceListIndex(p.name)});
+          for(var z = 0; z < p.children.length; z++)
+            parseParameterTypes(p.children[z],params,clone);
+        } 
+    }
+    /////////////////////
+    function translateSelectValue (v){
+      for(var i = 0; i < self.parametersJSON.translation.length; i++){
+        var t = self.parametersJSON.translation[i];
+        if(t.value == v){
+          for(var z = 0; z < self.parametersJSON.translation.length; z++){
+            var t2 = self.parametersJSON.translation[z];
+            if(t2.id == t.id && t2.language == AppClientLanguage){
+              return t2.value;
+            }
+          }
+        }
+      }
+      return v;
+    }
+    /////////////////////
+    function compareTranslation(v, comp){
+      for(var i = 0; i < self.parametersJSON.translation.length; i++){
+        var t = self.parametersJSON.translation[i];
+        if(t.value == v){
+          for(var z = 0; z < self.parametersJSON.translation.length; z++){
+            var t2 = self.parametersJSON.translation[z];
+            if(t2.id == t.id && t2.value == comp){
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+    /////////////////////
+    if(this.parametersJSON && this.parametersJSON.parameters){
+      for(var i = 0; i < this.parametersJSON.parameters.length; i++){
+        var p = this.parametersJSON.parameters[i]; 
+        parseParameterTypes(p,params,[]);
+      }
+    }
+
+    for (var i = 0; i < this.AppParams.length; i++) {
+      var s = this.AppParams[i];
+      var sp = s.split("=");
+      var n = decodeURIComponent(sp[0]);
+      var v = decodeURIComponent(sp[1]);
+      var a = v.split("|");
+      for (var z = 0; z < params.length; z++) {
+       if(params[z].name == n) {
+          params[z].value = v;
+          params[z].xmlValue = v;
+
+          if(params[z].type == "select"){
+             params[z].isEqual = function(v){
+              return compareTranslation(this.value,v);
+             };
+          }
+          if(params[z].type == "password"){
+             params[z].isEqual = function(to){ return this.value == md5(to); };
+          }
+          if(params[z].type == "marker"){
+             var m = v.split(";");
+             if(m.length == 3){
+               params[z].x = m[0];
+               params[z].y = m[1];
+               params[z].color = m[2];
+             }
+          } 
+          if(params[z].type == "media"){
+             params[z].media = a[0];
+             params[z].hint = "";
+             if(a.length > 1) params[z].value = a[1];
+
+             if(a[0] == "text"){
+              if(a.length > 2) params[z].hint = a[2];
+              if(a.length > 3) params[z].hintTTS = a[3];
+             }
+             if(a[0] == "image"){
+              if(a.length > 2) params[z].hint = a[2];
+              if(a.length > 3) params[z].hintTTS = a[3];
+             }
+             if(a[0] == "speech"){
+              params[z].language = a[2]; 
+              if(a.length > 3) params[z].hint = a[3];
+              if(a.length > 4) params[z].hintTTS = a[4];
+              params[z].loadPlayer = function (divid, autoStart){
+                var self = this;
+                if(autoStart && autoStart == true) AppClient.textToSpeech(this.value,this.language); 
+                var d = document.getElementById(divid);
+                d.innerHTML = '<a href="JavaScript:void(0)" onclick="AppClient.textToSpeech(\''+
+                               this.value.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\',\''+this.language+'\')">'+
+                              '<span class="glyphicon glyphicon-play"></span> '+AppClient.getTranslation("APPCLIENT_READSPEECH")+'</a>';
+                this.player = new Object();
+                this.player.stop = function(){ AppClient.textToSpeechStop(); }; 
+                this.player.play = function(){ AppClient.textToSpeech(self.value)}; 
+                return this.player;
+              }
+             }
+             if(a[0] == "audio"){
+              if(a.length > 2) params[z].startTime = timeToSeconds(a[2]);
+              if(a.length > 3) params[z].endTime = timeToSeconds(a[3]);
+              if(a.length > 4) params[z].hint = a[4];
+              if(a.length > 5) params[z].hintTTS = a[5];
+              params[z].loadPlayer = function (divid, autoStart){
+                var x = new YouTubeAudio(getYouTubeID(this.value));
+                x.startTime = this.startTime;
+                x.endTime = this.endTime;
+                x.isMute = this.isMute;
+                x.autoStart = autoStart ? autoStart : false;
+                x.loadPlayer(divid);
+                this.player = x;
+                return this.player;
+              }
+             }
+             if(a[0] == "video"){
+              if(a.length > 2) params[z].startTime = timeToSeconds(a[2]);
+              if(a.length > 3) params[z].endTime = timeToSeconds(a[3]);
+              if(a.length > 4) params[z].isMute = a[4] == "false";
+              if(a.length > 5) params[z].hint = a[5];
+              if(a.length > 6) params[z].hintTTS = a[6];
+              params[z].thumbURL = "//img.youtube.com/vi/" + getYouTubeID(params[z].value) + "/0.jpg";
+              params[z].loadPlayer = function (divid, autoStart, controls){
+                var x = new YouTubeVideo(getYouTubeID(this.value));
+                x.startTime = this.startTime;
+                x.endTime = this.endTime;
+                x.isMute = this.isMute;
+                x.autoStart = autoStart ? autoStart : false;
+                x.loadPlayerRun(divid);
+                if (controls == false) x.hideControls();
+                this.player = x;
+                return this.player;
+              }
+             }
+          }
+       }
+      }  
+    }
+    this.getParametersPrevious = params;
+   }
+   // copy last complete parameter array
+   params = this.getParametersPrevious;
+
+   return params.find(name);
+  }
+
+  this.getCookie = function (param){
+    var c = document.cookie + "";
+    if(c == "") return "";
+    var a = c.split(";");
+    for(var i=0; i < a.length; i++){
+     var d = a[i].split("=");
+     var ad = trim(d[0]).split("_");
+     if(ad.length < 3) continue;
+     if(ad[0] == "LA" && ad[1] == this.showID){
+      ad.splice(0,2);
+      if(ad.join("_") == param){
+       return decodeURIComponent(d[1]);
+      }
+     }
+    }
+    return "";
+  }
+  this.setCookie = function (param,value){
+    var today = new Date();
+    var expr = new Date(today.getTime() + 365 * 24 * 60 * 60 * 1000);
+    var d = expr.toGMTString();
+    var c = "";
+    c += "LA_"+this.showID+"_"+param + "=" + encodeURIComponent(value)+"; ";
+    c += "expires=" + d + "; ";
+    c += "domain=learningapps.org;path=/;";
+    document.cookie = c; 
+  } 
+  /* deprecated */
+  this.loadSpeech = function (param, divid, mini) {
+    textToSpeechInit();
+    var p = this.getParameter(param);
+    var u = p.split("|");
+    u[0] = u[0].replace(/'/g,"\\'");
+    u[0] = u[0].replace(/"/g,"&quot;");
+    var s = "";
+    if(mini){
+     s += '<img style="cursor:pointer;" src="/style/speech.png" alt="" onclick="AppClient.textToSpeech(\''+u[0]+'\',\''+u[1]+'\')"/>';
+    }else{
+     s += '<div style="background:white;border-radius:10px;padding:5px"><span onmouseup="AppClient.textToSpeech(\''+u[0]+'\',\''+u[1]+'\');" ontouchend="AppClient.textToSpeech(\''+u[0]+'\',\''+u[1]+'\');event.stopPropagation();event.stopDefault()" style="text-decoration:none;cursor:pointer;color:blue"><img style="vertical-align:middle;width:24px;height:24px;display:inline;margin-right:10px" src="'+AppClientServerProtocol+'//learningapps.org/style/speech.png" alt="" />'+this.getTranslation("APPCLIENT_READSPEECH")+"</span></div>";
+    }
+    document.getElementById(divid).innerHTML = s;
+  }
+  /* deprecated */
+  this.loadVideo = function (param, divid, controls, autoStart) {
+    var p = this.getParameter(param);
+    var u = p.split("|");
+    var x = new YouTubeVideo(getYouTubeID(u[0]));
+    x.startTime = timeToSeconds(u[1]);
+    x.endTime = timeToSeconds(u[2]);
+    x.isMute = u[3] != "true";
+    x.autoStart = autoStart;
+    x.loadPlayer(divid);
+    if (controls == false) x.hideControls();
+    return x;
+  }
+  /* deprecated */
+  this.loadVideoDirect = function (param, divid, controls, autoStart) {
+    var p = this.getParameter(param);
+    var u = p.split("|");
+    var x = new YouTubeVideo(getYouTubeID(u[0]));
+    x.startTime = timeToSeconds(u[1]);
+    x.endTime = timeToSeconds(u[2]);
+    x.isMute = u[3] != "true";
+    x.autoStart = autoStart;
+    x.loadPlayerRun(divid);
+    if (controls == false) x.hideControls();
+    return x;
+  }
+  /* deprecated */
+  this.loadAudio = function (param, divid, autoStart) {
+    var p = this.getParameter(param);
+    var u = p.split("|");
+    var x = new YouTubeAudio(getYouTubeID(u[0]));
+    x.startTime = timeToSeconds(u[1]);
+    x.endTime = timeToSeconds(u[2]);
+    x.autoStart = autoStart;
+    x.loadPlayer(divid);
+    return x;
+  }
+  /* deprecated */
+  this.loadImage = function (param, divid) {
+    var p = this.getParameter(param);
+    document.getElementById(divid).innerHTML = '<img src="' + p + '" alt="" />';
+  }
+  /* deprecated */
+  this.loadText = function (param, divid) {
+    var p = this.getParameter(param);
+    document.getElementById(divid).innerHTML = p;
+  }
+  /* deprecated */
+  this.checkPassword = function (param, value) {
+    var v = this.getParameter(param);
+    if (value == null) return false;
+    return v == md5(value);
+  }
+
+  this.shuffleArray = function (d,same){
+   var b;
+   for (var c = d.length - 1; c > 0; c--) {
+     if(same) 
+      b = Math.floor(AppClient.random() * (c + 1)); else
+      b = Math.floor(Math.random() * (c + 1));
+     var a = d[c];
+     d[c] = d[b];
+     d[b] = a;
+   }
+   return d;
+  }
+
+  this.tableSpreadElements = function (elements,container,callbackEachTime,callbackEnd){
+   var hs = new Array();
+   var ws = new Array();
+
+   var run = 10; 
+   function runFunc() {
+    var ox = container.offsetLeft;
+    var oy = container.offsetTop;
+    var cw = getOffsetWidth(container); 
+    var ch = getOffsetHeight(container);
+    var minh = 9999999;
+    for(var i=0; i < elements.length; i++){
+     var w1 = ws[i];
+     var h1 = hs[i];
+     w1 = getOffsetWidth(elements[i]); 
+     h1 = getOffsetHeight(elements[i]); 
+     ws[i] = w1;
+     hs[i] = h1;
+     minh = Math.min(minh, h1);      
+    }
+    //elements.sort(function(a,b){ return getOffsetHeight(a) - getOffsetHeight(b); });
+    for(var i=0; i < elements.length; i++){
+     var w1 = ws[i];
+     var h1 = hs[i];
+
+     var cols = Math.floor(cw / (w1*1.2));
+     var px = (cw - (w1*1.2*cols))/2;
+     var mrh = 0;
+     var th = 0;
+     var lastRow = 0;
+     var mch = 0;
+     for(var z=0; z < elements.length; z++){
+       if(Math.floor(z / cols) >  Math.floor(i / cols)) break;
+       if(lastRow != Math.floor(z / cols)) { th += mrh+minh*0.15 ; mrh = 0; lastRow = Math.floor(z / cols); }
+       if((z % cols) == (i % cols) && i != z) mch += hs[z]+minh*0.15 ;
+       mrh = Math.max(mrh, hs[z]);
+     }
+    
+
+     var nx = px+0.1*w1 + (w1*1.2) * (i % cols); 
+     var ny = mch + 0.2*minh; 
+
+     elements[i].style.left = (nx)+"px";
+     elements[i].style.top = (ny)+"px";      
+     if(typeof (callbackEachTime) == "function") callbackEachTime(elements[i]);
+    }
+    run--;    
+    if(run > 0) setTimeout(runFunc,200); else
+     if(typeof (callbackEnd) == "function") callbackEnd(elements);
+   };
+   setTimeout(runFunc,10);    
+  }
+
+  this.forceSpreadElements = function (elements,container,callbackEachTime,callbackEnd){
+   var ox = container.offsetLeft;
+   var oy = container.offsetTop;
+   var cx = getOffsetWidth(container)/2+ox; 
+   var cy = getOffsetHeight(container)/2+oy;
+   var g = 0.01;
+   var hs = new Array();
+   var ws = new Array();
+   for(var i=0; i < elements.length; i++){
+    var w = getOffsetWidth(elements[i]); 
+    var h = getOffsetHeight(elements[i]); 
+    ws[i] = w;
+    hs[i] = h;
+    // start in center of container
+    var x = cx + Math.round((Math.random()*100-50) / 10);
+    var y = cy + Math.round((Math.random()*100-50) / 10);
+    elements[i].style.left = (x-w/2)+"px";
+    elements[i].style.top  = (y-h/2)+"px";
+   }
+
+   function overlaps(x1,y1,w1,h1,x2,y2,w2,h2){
+    return !(x2 > x1+w1 || x2+w2 < x1 || y2 > y1+h1 || y2+h2 < y1);
+   }
+  
+   function collide(x1,y1,w1,h1,x2,y2,w2,h2){
+    var r1 = Math.max(w1,h1) / 2;  
+    var r2 = Math.max(w2,h2) / 2;  
+    var dx = x1-x2; 
+    var dy = y1-y2;
+    var moveX = 0;
+    var moveY = 0;
+    if(dx !== 0 || dy !== 0){ 
+     var distance = Math.sqrt(dx * dx + dy * dy);
+     var minDistance = r1 + r2; 
+     if(overlaps(x1-w1/2,y1-h1/2,w1,h1,x2-w2/2,y2-h2/2,w2,h2)){ 
+      distance = (distance - minDistance) / distance * 0.1;
+      moveX = dx * distance;
+      moveY = dy * distance;
+     }
+    }  
+    return [moveX,moveY];
+   }
+   
+   function boundIt(x,y,w,h){
+    if(x < ox+10) x = oy+10;
+    if(y < oy+20) y = oy+20;
+    if(x+w > ox+(cx-ox)*2-10) x = ox+(cx-ox)*2-w-10;
+    if(y+h > oy+(cy-oy)*2-10) y = oy+(cy-oy)*2-h-10; 
+    return [x,y];
+   }
+
+   var run = 30; 
+   function runFunc() {
+    var randomArray = [];
+    for(var i=0; i < elements.length; i++) randomArray.push(i);
+    randomArray = AppClient.shuffleArray(randomArray); 
+
+    for(var ra=0; ra < randomArray.length; ra++){
+     var i = randomArray[ra];
+     var w1 = ws[i];
+     var h1 = hs[i];
+     if(run % 5 == 0){
+      w1 = getOffsetWidth(elements[i]); 
+      h1 = getOffsetHeight(elements[i]); 
+      ws[i] = w1;
+      hs[i] = h1;
+     }
+
+     var x1 = parseFloat(elements[i].style.left)+w1/2;
+     var y1 = parseFloat(elements[i].style.top)+h1/2;
+     var nx = x1 + (Math.max(-5,Math.min(5,cx - x1)))*g; 
+     var ny = y1 + (Math.max(-5,Math.min(5,cy - y1)))*g; 
+     for(var z=0; z < elements.length; z++){
+      if(i == z) continue; 
+      var w2 = ws[z];
+      var h2 = hs[z]; 
+      var x2 = parseFloat(elements[z].style.left)+w2/2;
+      var y2 = parseFloat(elements[z].style.top)+h2/2;
+
+      var move = collide(x1,y1,w1,h1,x2,y2,w2,h2);  
+      var moveX = move[0];
+      var moveY = move[1];
+      var p = boundIt(x2+moveX-w2/2,y2+moveY-h2/2,w2,h2);  
+      elements[z].style.left = (p[0])+"px";
+      elements[z].style.top = (p[1])+"px";
+      nx -= moveX;
+      ny -= moveY;
+     }  
+
+     var p = boundIt(nx-w1/2,ny-h1/2,w1,h1); 
+     elements[i].style.left = (p[0])+"px";
+     elements[i].style.top = (p[1])+"px";      
+     if(typeof (callbackEachTime) == "function") callbackEachTime(elements[i]);
+    }
+    run--;    
+    if(run > 0) setTimeout(runFunc,10); else
+     if(typeof (callbackEnd) == "function") callbackEnd(elements);
+   };
+   setTimeout(runFunc,100);
+  }
+
+  this.onAppStateChange = null;
+  this.onInit = null;
+  this.onUserJoined = null;
+  this.onUserLeft = null;
+  this.onMessage = null;
+
+  this._onAppStateChange = null;
+  this._onInit = null;
+  this._onUserJoined = null;
+  this._onUserLeft = null;
+  this._onMessage = null;
+
+  this.checkAPIused = function () {
+    var used = (this.onAppStateChange != null || this.onUserJoined != null || 
+                this.onUserLeft != null || this.onMessage != null);
+    used = used || (this._onAppStateChange != null || this._onUserJoined != null || 
+                this._onUserLeft != null || this._onMessage != null);
+    return used;
+  }
+
+  this.startTime = new Date();
+
+  this.setSolved = function () {
+    var value = 100;
+    if (arguments.length > 0) value = arguments[0];
+    if (!this.isSolved) {
+      this.isSolved = true;
+      var t = Math.round((Math.abs(new Date() - this.startTime)/1000));
+
+      if (AppClientConnection.socket)
+          AppClientConnection.socket.setAppSolved(this.showID,value,this.startTime);
+      this.postMessage("AppSolved|"+this.showID+"|"+value+"|"+t);
+    }
+  }
+  this.setChecked = function() {
+    var t = Math.round((Math.abs(new Date() - this.startTime)/1000));
+    var v = "";
+    for(var i=0; i < arguments.length; i++) 
+      v += (i > 0 ? ';':'')+
+           (typeof arguments[i] == "object" && arguments[i].constructor === Array ? arguments[i].join(';') : arguments[i]);
+    this.postMessage("AppChecked|"+this.showID+"|"+t+'|'+v);
+  }
+  this.postMessage = function (s) {
+    var parent = window.parent;
+    while (parent) {
+      parent.postMessage(s, "*");
+      if (parent.parent && parent.parent != parent) parent = parent.parent;
+      else break;
+    }
+  }
+  this.textToSpeech = function(txt,lang){
+   textToSpeechInit();
+   if(!lang) lang = AppClientLanguage;
+   this.textToSpeechStop();
+   if(this.isLocal)
+    textToSpeech(txt,lang,true); else
+    textToSpeech(txt,lang);
+  }
+  this.textToSpeechStop = function () {
+   if(lastTextToSpeechPlayer) lastTextToSpeechPlayer.pause();
+   lastTextToSpeechPlayer = null;
+   if(window.speechSynthesis) speechSynthesis.cancel();
+  }
+  this.linkifyText = function (inputText) {
+    if(!inputText) return "";
+    inputText = " "+inputText;
+    var replaceText, replacePattern1, replacePattern2, replacePattern3;
+    //URLs starting with http://, https://, or ftp://
+    replacePattern1 = /[^"=?](\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+    replacedText = inputText.replace(replacePattern1, ' <a href="$1" target="_blank">$1</a>');
+    //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+    //replacePattern2 = /[^"](^|[^\/])(www\.[\S]+(\b|$))/gim;
+    //replacedText = replacedText.replace(replacePattern2, ' $1<a href="http://$2" target="_blank">$2</a>');
+    //Change email addresses to mailto:: links.
+    //replacePattern3 = /[^"](\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,6})/gim;
+    //replacedText = replacedText.replace(replacePattern3, ' <a href="mailto:$1">$1</a>');
+    replacedText = replacedText.substr(1);
+    return replacedText;
+  }
+  this.escapeHTML = function (inputText) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(inputText));
+    return div.innerHTML;
+  }
+  this.getAppState = function () {
+    if (!AppClientConnection.isReady) {
+     if (arguments.length == 0) return new Array();
+     return "";
+    }
+    var a = new Array();
+    if (AppClientConnection.socket) a = AppClientConnection.socket.getAppState(this.showID);
+    if (arguments.length == 0) return a;
+    if (arguments.length > 0) {
+      var param = arguments[0];
+      for (var i = 0; i < a.length; i++)
+      if (a[i].name == param) return a[i].value;
+    }
+    return "";
+  }
+  this.setAppState = function () {
+    var delta = new Object();
+    if (arguments.length == 2) delta[arguments[0]]=arguments[1];
+    else delta = arguments[0];
+    if (!AppClientConnection.isReady) return;
+    if (AppClientConnection.socket) AppClientConnection.socket.setAppStateDelta(this.showID, delta);
+  }
+  this.getUsers = function () {
+    var a = new Array();
+    if (AppClientConnection.socket) a = AppClientConnection.socket.getUsers(this.showID);
+    return a;
+  }
+  this.sendMessage = function () { // msg, to
+    var msg = arguments[0];
+    var to = (arguments.length > 1 ? arguments[1] : "*");
+    AppClientConnection.socket.sendMessage(this.showID, to, msg, this.username);
+  }
+  if(typeof (AppClientNoINIT) == "undefined") this.init();
+}
+
+if(typeof window.addEventListener == "function") {
+  var APIReturnIndex = 0; 
+  window.addEventListener("message", function(event){
+    var parts = event.data.split("|");
+    if(parts[0] == "AppClient"){
+      parts.shift(); 
+      var f = parts.shift(); 
+      var r = ""; 
+      if(typeof AppClient[f] == "function") {
+        r = AppClient[f].apply(AppClient,parts);
+        if(typeof r == "undefined") r = "";
+      }else{
+        r = AppClient[f];
+      }
+      APIReturnIndex++;
+      AppClient.postMessage("AppClientReturns|"+AppClient.showID+"|"+APIReturnIndex+"|"+f+"|"+r);
+    }
+  }, false);
+}
+//////////////////////////////////////////////////////////////////////////////////
+// AppClient Handlers
+//////////////////////////////////////////////////////////////////////////////////
+function AppClient_registered(showID, ipname) {
+  function hideLoadingPanel(i){
+   if(AppClientConnection.clients[i].loadingPanel)
+      AppClientConnection.clients[i].loadingPanel.style.display = "none";
+  }
+
+  if (!AppClientConnection.client.isLocal) 
+       AppClientConnection.client.username = ipname;
+  for (var i = 0; i < AppClientConnection.clients.length; i++) {
+    if (AppClientConnection.clients[i].showID != showID) continue;
+    if (!AppClientConnection.clients[i].isLocal) 
+         AppClientConnection.clients[i].username = ipname;
+    try{
+     AppClientConnection.clients[i].showTaskPanel(true);
+     AppClientConnection.clients[i].addNavigationButtons();
+    }catch(e){continue;} // iframe is unloaded already
+    setTimeout('if(AppClientConnection.clients['+i+'].loadingPanel) AppClientConnection.clients['+i+'].loadingPanel.style.display = "none";',100);
+    if (!AppClientConnection.clients[i].registered && AppClientConnection.clients[i]._onInit != null)
+         AppClientConnection.clients[i]._onInit();
+    if (!AppClientConnection.clients[i].registered && AppClientConnection.clients[i].onInit != null)
+         AppClientConnection.clients[i].onInit();
+    AppClientConnection.clients[i].registered = true;
+  }
+}
+//////////////////////////////////////////////////////////////////////////////////
+function AppClient_checkAPIused() {
+  // check if all clients have registered
+  var allRegistered = true;
+  for (var i = 0; i < AppClientConnection.clients.length; i++) {
+    allRegistered = allRegistered && AppClientConnection.clients[i].registered;
+  }
+  if (allRegistered) {
+    var useAPI = false;
+    for (var i = 0; i < AppClientConnection.clients.length; i++) {
+     try{
+      useAPI = useAPI || AppClientConnection.clients[i].checkAPIused();
+     }catch(e){continue;} // iframe is unloaded already
+    }
+    if (!useAPI) {
+      // we dont need Comet, turn it off
+      AppClientConnection.socket.ajaxUnused = true;
+      AppClientConnection.socket.ajaxConnected = false;
+    }
+  }
+}
+//////////////////////////////////////////////////////////////////////////////////
+function AppClient_message(showID, from, msg) { 
+  if(trim(msg) != "") AppClient.console(getCurrentTime()+":MESSAGE: "+msg+" ("+from+" -> "+AppClient.username+")");
+  if(trim(msg) != "" && msg.indexOf("#__") == 0) msg = JSON.parse(msg.replace("#__",""));
+  for (var i = 0; i < AppClientConnection.clients.length; i++) {
+    if (AppClientConnection.clients[i].showID != showID) continue;
+    if (AppClientConnection.clients[i]._onMessage != null) AppClientConnection.clients[i]._onMessage(msg, from);
+    if (AppClientConnection.clients[i].onMessage != null) AppClientConnection.clients[i].onMessage(msg, from);
+  }
+}
+//////////////////////////////////////////////////////////////////////////////////
+function AppClient_userJoined(showID, username) {
+  AppClient.console(getCurrentTime()+":USERJOINED: "+username);
+  for (var i = 0; i < AppClientConnection.clients.length; i++) {
+    if (AppClientConnection.clients[i].showID == showID){
+    if (AppClientConnection.clients[i]._onUserJoined != null) 
+        AppClientConnection.clients[i]._onUserJoined(username);
+    if (AppClientConnection.clients[i].onUserJoined != null) 
+        AppClientConnection.clients[i].onUserJoined(username);
+   }
+  }
+}
+//////////////////////////////////////////////////////////////////////////////////
+function AppClient_userLeft(showID, username) {
+  AppClient.console(getCurrentTime()+":USERLEFT: "+username);
+  for (var i = 0; i < AppClientConnection.clients.length; i++) {
+    if (AppClientConnection.clients[i].showID == showID) {
+    if (AppClientConnection.clients[i]._onUserLeft != null) 
+        AppClientConnection.clients[i]._onUserLeft(username);
+    if (AppClientConnection.clients[i].onUserLeft != null) 
+        AppClientConnection.clients[i].onUserLeft(username);
+   }
+  }
+}
+//////////////////////////////////////////////////////////////////////////////////
+function AppClient_updateAppState(showID, changed) {
+  AppClient.console(getCurrentTime()+":APPSTATE: "+changed.join(";"));
+
+  if (AppClientConnection.socket.type == "local") {
+   if(typeof(Storage)!=="undefined" && localStorage){
+    localStorage["AppClient_"+showID] = AppClientConnection.socket.AppStates[showID];
+   }
+  }
+  for (var i = 0; i < AppClientConnection.clients.length; i++) {
+    if (AppClientConnection.clients[i].showID == showID){
+    if (AppClientConnection.clients[i]._onAppStateChange != null) 
+        AppClientConnection.clients[i]._onAppStateChange(changed);
+    if (AppClientConnection.clients[i].onAppStateChange != null) 
+        AppClientConnection.clients[i].onAppStateChange(changed);
+   }
+  }
+}
+//////////////////////////////////////////////////////////////////////////////////
+function AppClient_tryreconnect() {
+  alert(AppClientConnection.getTranslation("APPCLIENT_CONNECTIONLOST"));
+}
+//////////////////////////////////////////////////////////////////////////////////
+function AppClient_incomingData(msg) {
+  if(trim(msg) != "") AppClient.console(getCurrentTime()+":MESSAGE: "+msg);
+
+  var lines = msg.split("\n");
+  var showid = "";
+  var from = "";
+  for (var i = 0; i < lines.length; i++) {
+    lines[i] = lines[i].replace(/\x00/g, "");
+    var a = lines[i].split("|");
+    if (a[0] == "AJAX_CONNTECTED") {
+      AppClientConnection.socket.ajaxConnected = true;
+      if (AppClientConnection.socket.firstInit) {
+        setTimeout("AppClient_checkAPIused();", 10000);
+        AppClientConnection.socket.firstInit = false;
+        AppClientConnection.socket.pollingInterval = setTimeout(function(){AppClientConnection.socket.polling()}, 500);
+      } else {
+        AppClientConnection.socket.reconnect();
+        AppClientConnection.socket.pollingDone = true;
+        //AppClientConnection.socket.pollingInterval = setTimeout(function(){AppClientConnection.socket.polling()}, 500);
+      }
+      continue;
+    }
+    if (a[0] == "REGISTERED") {
+      showid = a[1];
+      AppClientConnection.socket.datetime = new Date(a[3]);
+      AppClientConnection.socket.localdatetime = new Date();
+
+      AppClient_registered(showid, a[2]);
+      continue;
+    }
+    if (a[0] == "INITAPPSTATE"){
+      showid = a[1];
+      a.splice(0, 2);
+      AppClientConnection.socket.AppStates[showid] = a.join("|");
+      continue;
+    }
+    if (a[0] == "APPSTATE") {
+      showid = a[1];
+      a.splice(0, 2);
+      AppClientConnection.socket.AppStates[showid] = a.join("|");
+      var b = AppClientConnection.socket.getAppState(showid);
+      var r = new Array();
+      for (var bi = 0; bi < b.length; bi++) {
+        r.push(b[bi].name);
+      }
+      if(r.length > 0) AppClient_updateAppState(showid, r);
+      continue;
+    }
+    if (a[0] == "MSG") {
+      showid = a[1];
+      from = a[2];
+      AppClient_message(showid, from, decodeURIComponent(a[3]));
+      continue;
+    }
+    if (a[0] == "CHANGEAPPSTATE") {
+      showid = a[1];
+      a.splice(0, 2);
+      var r = new Array();
+      for (var ai = 0; ai < a.length; ai += 2) {
+        var n = a[ai];
+        var v = decodeURIComponent(a[ai + 1]);
+        var newState = "";
+        var b = AppClientConnection.socket.getAppState(showid);
+        var isThere = false;
+        for (var bi = 0; bi < b.length; bi++) {
+          var sn = b[bi].name;
+          var sv = b[bi].value;
+          if (sn == n) {
+            if (sv != v) {
+              sv = v;
+              r.push(sn);
+            }
+            isThere = true;
+          }
+          newState += sn + "=" + encodeURIComponent(sv);
+          if (bi < b.length - 1) newState += "|";
+        }
+        if (!isThere) {
+          if (newState != "") newState += "|";
+          newState += n + "=" + encodeURIComponent(v);
+          r.push(n);
+        }
+        AppClientConnection.socket.AppStates[showid] = newState;
+      }
+      if(r.length > 0) AppClient_updateAppState(showid, r);
+      continue;
+    }
+    if (a[0] == "USERS") {
+      showid = a[1];
+      a.splice(0, 2);
+      if (a.length == 0) continue;
+      AppClientConnection.socket.Participants[showid] = a.join("|");
+      for (var ai = 0; ai < a.length; ai++)
+      AppClient_userJoined(showid, a[ai]);
+      continue;
+    }
+    if (a[0] == "USERJOINED") {
+      showid = a[1];
+      clientname = a[2];
+      var p = AppClientConnection.socket.Participants[showid];
+      var isThere = false;
+      if (p) {
+        var pa = p.split("|");
+        for (var pi = 0; pi < pa.length; pi++) {
+          if (pa[pi] == clientname) isThere = true;
+        }
+      }
+      if (!isThere) AppClientConnection.socket.Participants[showid] = (p ? (p + (p != "" ? "|" : "") + clientname) : clientname);
+      AppClient_userJoined(showid, clientname);
+      continue;
+    }
+    if (a[0] == "USERLEFT") {
+      clientname = a[1];
+      for (var ai = 0; ai < AppClientConnection.socket.AppStateIDs.length; ai++) {
+        var p = AppClientConnection.socket.Participants[AppClientConnection.socket.AppStateIDs[ai]];
+        if (!p) continue;
+        var changed = false;
+        var pa = p.split("|");
+        for (var pi = 0; pi < pa.length; pi++) {
+          if (pa[pi] == clientname) {
+            pa.splice(pi, 1);
+            changed = true;
+            break;
+          }
+        }
+        AppClientConnection.socket.Participants[AppClientConnection.socket.AppStateIDs[i]] = pa.join("|");
+        AppClient_userLeft(AppClientConnection.socket.AppStateIDs[ai], clientname);
+      }
+      continue;
+    }
+  }
+}
+//////////////////////////////////////////////////////////////////////////////////
+function AppClient_Randomizer (seed){
+	var keySchedule = [];
+	var keySchedule_i = 0;
+	var keySchedule_j = 0;
+	seed = seed + "";
+	function init(seed) {
+		for (var i = 0; i < 256; i++)
+			keySchedule[i] = i;
+		
+		var j = 0;
+		for (var i = 0; i < 256; i++)
+		{
+			j = (j + keySchedule[i] + seed.charCodeAt(i % seed.length)) % 256;
+			
+			var t = keySchedule[i];
+			keySchedule[i] = keySchedule[j];
+			keySchedule[j] = t;
+		}
+	}
+	init(seed);
+	
+	function getRandomByte() {
+		keySchedule_i = (keySchedule_i + 1) % 256;
+		keySchedule_j = (keySchedule_j + keySchedule[keySchedule_i]) % 256;
+		
+		var t = keySchedule[keySchedule_i];
+		keySchedule[keySchedule_i] = keySchedule[keySchedule_j];
+		keySchedule[keySchedule_j] = t;
+		
+		return keySchedule[(keySchedule[keySchedule_i] + keySchedule[keySchedule_j]) % 256];
+	}
+	
+	this.random = function() {
+		var number = 0;
+		var multiplier = 1;
+		for (var i = 0; i < 8; i++) {
+			number += getRandomByte() * multiplier;
+			multiplier *= 256;
+		}
+		return number / 18446744073709551616;
+	}
+}
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+if (typeof AppClientServerProtocol === "undefined") {
+ AppClientServerProtocol = "";
+}
+//////////////////////////////////////////////////////////////////////////////////
+if (!Array.prototype.indexOf) {
+ // ie8 fix
+ Array.prototype.indexOf = function(obj, start) {
+     for (var i = (start || 0), j = this.length; i < j; i++) {
+         if (this[i] === obj) { return i; }
+     }
+     return -1;
+ }
+}
+//////////////////////////////////////////////////////////////////////////////////
+function stopEvent(e) {
+ if(!e) var e = window.event;
+ e.cancelBubble = true;
+ e.returnValue = false;
+ 
+ if ( e.stopPropagation ) e.stopPropagation();
+ if ( e.preventDefault ) e.preventDefault();		
+ return false;
+}
+//////////////////////////////////////////////////////////////////////////////////
+function openNextSibling(e){
+ var elem = e;
+ do {
+  elem = elem.nextSibling;
+ } while (elem && elem.nodeType != 1);
+ if(elem) elem.style.display = "block";
+}
+//////////////////////////////////////////////////////////////////////////////////
+function openPreviousSibling(e){
+ var elem = e;
+ do {
+  elem = elem.previousSibling;
+ } while (elem && elem.nodeType != 1);
+ if(elem) elem.style.display = "block";
+}
+//////////////////////////////////////////////////////////////////////////////////
+function hideParentNode(e){
+ if(e && e.parentNode) e.parentNode.style.display = "none";
+}
+//////////////////////////////////////////////////////////////////////////////////
+var loadScriptStack = [];
+var loadScriptStackLoading = false;
+var loadScriptStackWorkerInterval = null;
+function loadScript(sURL, onLoad) {
+  loadScriptStack.push({url:sURL, callback:onLoad});
+  if(loadScriptStackWorkerInterval == null){
+     loadScriptStackWorkerInterval = setInterval(loadScriptStackWorker,10);
+  }
+}
+
+function loadScriptStackWorker() {
+  var body = document.getElementsByTagName("body");
+  if (body.length == 0) return;
+
+  if(loadScriptStackLoading) return; // still one file loading
+
+  if(loadScriptStack.length == 0 && loadScriptStackWorkerInterval != null){
+   clearInterval(loadScriptStackWorkerInterval);
+   loadScriptStackWorkerInterval = null;
+   return;
+  }
+
+  var s = loadScriptStack.shift();
+
+  function loadScriptHandler() {
+    var rs = this.readyState;
+    if (rs == 'loaded' || rs == 'complete') {
+      this.onreadystatechange = null;
+      this.onload = null;
+      s.callback();
+      loadScriptStackLoading = false;
+    }
+  }
+
+  var oS = document.createElement('script');
+  oS.type = 'text/javascript';
+  oS.onreadystatechange = loadScriptHandler;
+  oS.onload = function(){
+     this.onreadystatechange = null;
+     this.onload = null;
+     if (s.callback) window.setTimeout(s.callback,20);
+     loadScriptStackLoading = false;
+    };
+  
+  loadScriptStackLoading = true;
+  oS.src = s.url;
+  document.body.appendChild(oS);
+}
+//////////////////////////////////////////////////////////////////////////////////
+function loadCSS(sURL, onLoad, withBody) {
+  function loadCSSHandler() {
+    var rs = this.readyState;
+    if (rs == 'loaded' || rs == 'complete') {
+      this.onreadystatechange = null;
+      this.onload = null;
+      if (onLoad) {
+        onLoad();
+      }
+    }
+  }
+
+  function CSSOnload() {
+    this.onreadystatechange = null;
+    this.onload = null;
+    window.setTimeout(onLoad,20);
+  }
+
+  var oS = document.createElement('link');
+  oS.type = 'text/css';
+  oS.rel = 'stylesheet';
+  if (onLoad) {
+    oS.onreadystatechange = loadCSSHandler;
+    oS.onload = CSSOnload;
+  }
+  oS.href = sURL;
+  var heads = document.getElementsByTagName("head");
+  var bodys = document.getElementsByTagName("body");
+  if(heads.length > 0 && (!withBody || bodys.length > 0))
+     heads[0].appendChild(oS); else setTimeout(function(){loadCSS(sURL, onLoad, withBody);} ,50);
+}
+//////////////////////////////////////////////////////////////////////////////////
+function loadCSSString(t,withBody){
+  var oS = document.createElement('style');
+  oS.type = 'text/css';
+  if (oS.styleSheet){
+    oS.styleSheet.cssText = t;
+  } else {
+    oS.appendChild(document.createTextNode(t));
+  }
+   
+  var heads = document.getElementsByTagName("head");
+  var bodys = document.getElementsByTagName("body");
+  if(heads.length > 0 && (!withBody || bodys.length > 0))
+     heads[0].appendChild(oS); else setTimeout(function(){loadCSSString(t,withBody);} ,50);
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+var autoTextArea_List = new Array();
+
+function refreshAutoExpandTextareas(){
+ for(var i=0; i < autoTextArea_List.length; i++){
+  autoTextArea_List[i].resize(autoTextArea_List[i].element);
+ }
+}
+
+function makeAutoExpandTextarea(id){
+ var t = document.getElementById(id);
+ if(!t) {setTimeout(function(){makeAutoExpandTextarea(id);},10); return; }
+
+ // check if already in list
+ for(var i=0; i < autoTextArea_List.length; i++){
+  if(autoTextArea_List[i].element == t) {
+   autoTextArea_List[i].resize(autoTextArea_List[i].element);
+   return;
+  }
+ }
+
+ var offset= !window.opera ? (t.offsetHeight - t.clientHeight) : (t.offsetHeight + parseInt(window.getComputedStyle(t, null).getPropertyValue('border-top-width'))) ;
+ t.style.overflow = "hidden";
+ var resize = function(t) {
+  var dy = t.offsetHeight - t.clientHeight;
+  t.style.height = (27-dy)+'px';
+  if(t.scrollHeight > 0) 
+     t.style.height = (t.scrollHeight  + offset ) + 'px';	
+ };
+ autoTextArea_List.push({element:t, resize:resize});
+ setTimeout(function(){resize(t);},100);
+ setTimeout(function(){resize(t);},1000);
+ t.addEventListener && t.addEventListener('input', function(event) {resize(t);});
+ t.addEventListener && t.addEventListener('keyup', function(event) {resize(t);});
+ t['attachEvent'] && t.attachEvent('onkeyup', function() {resize(t);});
+}
+//////////////////////////////////////////////////////////////////////////////////
+function browserSupportsFixed() {
+  var container = document.body;
+  if (document.createElement &&
+      container && container.appendChild && container.removeChild) {
+      var el = document.createElement("div");
+      if (!el.getBoundingClientRect) {
+          return null;
+      }
+      el.innerHTML = "x";
+      el.style.cssText = "position:fixed;top:100px;";
+      container.appendChild(el);
+      var originalHeight = container.style.height, originalScrollTop = container.scrollTop;
+      container.style.height = "3000px";
+      container.scrollTop = 500;
+      var elementTop = el.getBoundingClientRect().top;
+      container.style.height = originalHeight;
+      var isSupported = elementTop === 100;
+      container.removeChild(el);
+      container.scrollTop = originalScrollTop;
+      return false; // isSupported;
+  }
+  return null;
+}
+//////////////////////////////////////////////////////////////////////////////////
+function htmlEncode(source) {
+	var result = source;
+	result = result.replace(/\n/g,'<br/>');
+	result = result.replace(/\&/g,'&amp;');
+	result = result.replace(/\</g,'&lt;');
+	result = result.replace(/\>/g,'&gt;');
+	result = result.replace(new RegExp('"','g'), '&quot;');
+	return result;
+}
+//////////////////////////////////////////////////////////////////////////////
+function getFlexApp(movieName) {
+  if (navigator.appName.indexOf("Microsoft Internet")==-1)
+  {
+    if (document.embeds && document.embeds[movieName])
+      return document.embeds[movieName]; 
+  }
+
+  if (navigator.appName.indexOf("Microsoft Internet")!=-1)
+  return document.getElementById(movieName);
+
+  if (window.document[movieName]) 
+  {
+      return window.document[movieName];
+  }
+
+  return document.getElementById(movieName);
+}
+//////////////////////////////////////////////////////////////////////////////
+function addEvent(el, eType, fn, uC) {
+	if (el.addEventListener) {
+		el.addEventListener(eType, fn, uC);
+		return true;
+	} else if (el.attachEvent) {
+		return el.attachEvent('on' + eType, fn);
+	} else {
+		el['on' + eType] = fn;
+	}
+} 
+//////////////////////////////////////////////////////////////////////////////
+function getIFrameHeight(){
+    var height = document.body.scrollHeight;
+    var c = document.body.offsetHeight;
+    if(c && c < height) height = c;
+
+    return parseInt(height);
+}
+//////////////////////////////////////////////////////////////////////////////
+function getURLParam(strParamName){
+ var strReturn = "";
+ strParamName = strParamName.toLowerCase();
+ var strHref = window.location.href;
+ if ( strHref.indexOf("?") > -1 ){
+  var strQueryString = strHref.substr(strHref.indexOf("?")+1);
+  var a = strQueryString.split("&");
+  for ( var i = 0; i < a.length; i++ ){
+   var b = a[i].split("=");
+   if (b[0].toLowerCase() == strParamName){
+    strReturn = b[1];
+    break;
+   }
+  }
+ }
+ return strReturn;
+}
+//////////////////////////////////////////////////////////////////////////////
+function getYouTubeID(u){
+  u = u.split("/");
+  u = u[u.length-1];
+  if(u.indexOf("?")>= 0){
+    if(u.indexOf("v=") >= 0){
+      u = u.split("?");
+      u = u[1];
+      u = u.split("&");
+      for(var i=0; i< u.length; i++){
+        var d = u[i];
+        d = d.split("=");
+        if(d[0] == "v") return d[1];
+      }
+    }else{
+      u = u.split("?");
+      return u[0];
+    }
+  }else{
+    return u;
+  }
+  return "";
+}
+//////////////////////////////////////////////////////////////////////////////
+function timeToSeconds(s){
+    if(s == "" || s == undefined) return 0;
+    s = s.replace(".",":");
+    var ta = s.split(":");
+    t = 0;
+    for(var i=0; i < ta.length; i++){
+     while(ta[i] != "" && ta[i][0] == "0") ta[i] = ta[i].substring(1);
+     if(ta[i] == "") ta[i] = "0";
+    }
+    if(ta.length == 3){
+       t += parseInt(ta[0])*60*60;
+       t += parseInt(ta[1])*60;
+       t += parseInt(ta[2]);
+    }
+    if(ta.length == 2){
+       t += parseInt(ta[0])*60;
+       t += parseInt(ta[1]);
+    }
+    if(ta.length == 1){
+       t += parseInt(ta[0]);
+    }
+    return t;
+}
+//////////////////////////////////////////////////////////////////////////////
+function secondsToTime(i){
+ return ((i - i % 60)/60)+":"+(i % 60 < 10 ? "0":"")+(i % 60);
+}
+//////////////////////////////////////////////////////////////////////////////
+function trim(str, chars) {
+ return ltrim(rtrim(str, chars), chars);
+}
+
+function ltrim(str, chars) {
+ chars = chars || "\\s";
+ return str.replace(new RegExp("^[" + chars + "]+", "g"), "");
+}
+ 
+function rtrim(str, chars) {
+ chars = chars || "\\s";
+ return str.replace(new RegExp("[" + chars + "]+$", "g"), "");
+}
+//////////////////////////////////////////////////////////////////////////////
+var textToSpeechAudioCounter = -3;
+var soundManagerReady = false;
+var textToSpeechHtml5 = false;
+
+function soundManagerReadyCallback(){
+ if(textToSpeechAudioCounter == -1) return; // already on the way
+ textToSpeechAudioCounter = -1; 
+ soundManager.setup({
+  url: AppClientServerProtocol+'//learningapps.org/text-to-speech/',
+  debugMode : false,
+  noSWFCache: true,
+  useHTML5Audio: true,
+  preferFlash: false, //!textToSpeechHtml5,
+  flashLoadTimeout:0,
+  onready: function() {
+   soundManagerReady = true;	
+   textToSpeechAudioCounter = 0; 
+  },
+  ontimeout: function() {
+   soundManagerReady = true;	
+   textToSpeechAudioCounter = 0; 
+  }
+ });
+ setTimeout(function(){ 
+   soundManager.beginDelayedInit();
+ },500);
+}
+
+window.speechSynthesisVoices = [ // default voices - ios hack
+  { name: "Zuzana", voiceURI: "com.apple.ttsbundle.Zuzana-compact", lang: "cs-CZ", localService: true, "default": true },
+  { name: "Anna", voiceURI: "com.apple.ttsbundle.Anna-compact", lang: "de-DE", localService: true, "default": true },
+  { name: "Daniel", voiceURI: "com.apple.ttsbundle.Daniel-compact", lang: "en-GB", localService: true, "default": true },
+  { name: "Samantha (Enhanced)", voiceURI: "com.apple.ttsbundle.Samantha-premium", lang: "en-US", localService: true, "default": true },
+  { name: "Samantha", voiceURI: "com.apple.ttsbundle.Samantha-compact", lang: "en-US", localService: true, "default": true },
+  { name: "Monica", voiceURI: "com.apple.ttsbundle.Monica-compact", lang: "es-ES", localService: true, "default": true },
+  { name: "Thomas", voiceURI: "com.apple.ttsbundle.Thomas-compact", lang: "fr-FR", localService: true, "default": true },
+  { name: "Mariska", voiceURI: "com.apple.ttsbundle.Mariska-compact", lang: "hu-HU", localService: true, "default": true },
+  { name: "Alice", voiceURI: "com.apple.ttsbundle.Alice-compact", lang: "it-IT", localService: true, "default": true },
+  { name: "Xander", voiceURI: "com.apple.ttsbundle.Xander-compact", lang: "nl-NL", localService: true, "default": true },
+  { name: "Zosia", voiceURI: "com.apple.ttsbundle.Zosia-compact", lang: "pl-PL", localService: true, "default": true },
+  { name: "Joana", voiceURI: "com.apple.ttsbundle.Joana-compact", lang: "pt-PT", localService: true, "default": true },
+  { name: "Milena", voiceURI: "com.apple.ttsbundle.Milena-compact", lang: "ru-RU", localService: true, "default": true },
+  { name: "Yelda", voiceURI: "com.apple.ttsbundle.Yelda-compact", lang: "tr-TR", localService: true, "default": true }
+];
+window.speechSynthesisVoicesSet = false;
+
+function getSpeechSynthesisVoices() {
+  if(typeof speechSynthesis == "undefined") return;
+  if(window.speechSynthesisVoicesSet) return;
+  var v = speechSynthesis.getVoices(); 
+  if(v.length > 0) {
+    window.speechSynthesisVoices = v;
+    window.speechSynthesisVoicesSet = true;
+  }else
+    setTimeout(getSpeechSynthesisVoices,200);
+}
+getSpeechSynthesisVoices();
+
+function textToSpeechInit(){
+ if(textToSpeechAudioCounter == -3){
+  textToSpeechAudioCounter = -2;
+  loadScript(AppClientServerProtocol+"//learningapps.org/text-to-speech/soundmanager2.js?r="+Math.random()+".mp3",
+             soundManagerReadyCallback);
+ }
+}
+
+var textToSpeechRetryCounter = 0;
+var lastTextToSpeechPlayer = null;
+
+var textToSpeechHTML5FirstLoad = true;
+var textToSpeechHTML5FirstChange = true;
+
+function textToSpeechHTML5(s,lang){
+  if(window.speechSynthesisVoices.length == 0) return;
+
+  var utterance = new SpeechSynthesisUtterance(s);
+
+  var voices = window.speechSynthesisVoices;
+  var v = null;
+  var en = null;
+  for(var i=0; i < voices.length; i++){
+    var a = voices[i].lang.split("-");
+    if(a[0] == "en" && en == null) en = voices[i];
+    if(voices[i]["default"] && a[0] == "en") en = voices[i];
+    if(a[0] == lang && v == null) v = voices[i];
+    if(voices[i]["default"] && a[0] == lang) v = voices[i];
+  } 
+
+  utterance.voice = v ? v : en;
+  if(lang == 'en') utterance.lang = 'en-US';
+  if(lang == 'fr') utterance.lang = 'fr-FR';
+  if(lang == 'de') utterance.lang = 'de-DE';
+  if(lang == 'it') utterance.lang = 'it-IT';
+  if(lang == 'ru') utterance.lang = 'ru-RU';
+  if(lang == 'es') utterance.lang = 'es-ES';
+  utterance.volume = 1;
+  utterance.rate = 0.9;
+//  if(navigator.platform && ( /iPad|iPhone|iPod/.test(navigator.platform))) utterance.rate = 0.1;
+  utterance.pitch = 1;
+  speechSynthesis.speak(utterance);
+}
+
+var text2speechDebounceTimer = null;
+
+function textToSpeech(s,lang,html5){
+ if(text2speechDebounceTimer) clearTimeout(text2speechDebounceTimer);
+  
+ text2speechDebounceTimer = setTimeout(function(){
+   if(!lang) lang = "de";
+   lang = lang.toLowerCase();
+/*
+   if(typeof window.speechSynthesis != "undefined") {
+     console.log("Text2Speech Synthesis");
+     textToSpeechHTML5(s,lang);
+     return;  
+   }
+*/
+   textToSpeechAudioCounter = 0;
+   if(lastTextToSpeechPlayer) { lastTextToSpeechPlayer.pause(); lastTextToSpeechPlayer = null; }
+
+   lastTextToSpeechPlayer = new Audio(AppClientServerProtocol+"//learningapps.org/text-to-speech/t2s.php?tl="+lang+"&txt="+encodeURIComponent(s)+ "&rnd="+Math.random());
+   lastTextToSpeechPlayer.play();
+ },250);
+
+ return;
+}
+//////////////////////////////////////////////////////////////////////////////
+var MathJaxEnabled = true;
+function addMathJax(){
+ var body = document.getElementsByTagName("body");
+ if (body.length == 0) {
+  setTimeout("addMathJax()", 150);
+  return;
+ }
+
+ if(!MathJaxEnabled) return;
+ var script= document.createElement('script');
+ script.type= 'text/x-mathjax-config';
+ script.text = 'MathJax.Hub.Config({showMathMenu:false,showProcessingMessages:false, tex2jax: {inlineMath: [["$$","$$"]], displayMath: [["$$$","$$$"]], processEnvironments:false}});';
+ document.body.appendChild(script);
+
+ var script= document.createElement('script');
+ script.type= 'text/javascript';
+ script.src= AppClientServerProtocol+'//learningapps.org/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+ document.body.appendChild(script);
+
+ MathJaxRefresh = setInterval("refreshMathJax()",1000);
+}
+function refreshMathJax(){
+ if(!MathJaxEnabled) return;
+ if(typeof(MathJax) != "undefined" && MathJax.Hub)
+    MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+}
+
+var checkForMathJax = function(){
+ var body = document.getElementsByTagName("body");
+ if (body.length == 0) {
+  setTimeout("checkForMathJax()", 150);
+  return;
+ }
+
+ setTimeout(function(){
+ if(typeof AppClient != "undefined"){
+  var params = AppClient.getParameters();
+  var hasLatex = false;
+  for(var i=0; i < params.length; i++){
+   if(params[i].value.indexOf("$$") >= 0) {hasLatex = true; break;} 
+   if(params[i].hint && params[i].hint.indexOf("$$") >= 0) {hasLatex = true; break;} 
+  }
+  if(!hasLatex){ 
+   if(document.body && document.body.innerHTML.indexOf("$$") < 0) return; // no MathJax
+  }
+ }
+ addMathJax();
+ },250);
+}
+checkForMathJax();
+
+//////////////////////////////////////////////////////////////////////////////
+function makeIETouchWork(){
+  var css = document.styleSheets[0];
+  if(css){
+   if(css.insertRule) 
+    css.insertRule(".ui-draggable {-ms-touch-action:none;}",0); else
+    css.addRule(".ui-draggable", "-ms-touch-action:none;");
+  }
+}
+
+setTimeout(makeIETouchWork,250);
+
+//////////////////////////////////////////////////////////////////////////////
+function _getElementOffset(elm, height) {
+	var cStyle = elm.ownerDocument && elm.ownerDocument.defaultView && elm.ownerDocument.defaultView.getComputedStyle
+		&& elm.ownerDocument.defaultView.getComputedStyle(elm, null),
+		ret = cStyle && cStyle.getPropertyValue(height ? 'height' : 'width') || '';
+	if (ret && ret.indexOf('.') > -1) {
+		ret = parseFloat(ret)
+			+ parseInt(cStyle.getPropertyValue(height ? 'padding-top' : 'padding-left'))
+			+ parseInt(cStyle.getPropertyValue(height ? 'padding-bottom' : 'padding-right'))
+			+ parseInt(cStyle.getPropertyValue(height ? 'border-top-width' : 'border-left-width'))
+			+ parseInt(cStyle.getPropertyValue(height ? 'border-bottom-width' : 'border-right-width'));
+	} else {
+		ret = height ? elm.offsetHeight : elm.offsetWidth;
+	}
+	return ret;
+}
+function getOffsetWidth(elm) {
+	return _getElementOffset(elm);
+}
+function getOffsetHeight(elm) {
+	return _getElementOffset(elm, true);
+}
+
+/*
+var lightBox = new Object();
+lightBox.body = null;
+lightBox.overlay = null;
+lightBox.container = null;
+lightBox.close = null;
+lightBox.description = null;
+
+lightBox.lightbox = function (imageurl, text, desc){
+ if(this.container) return;
+ this.body = document.getElementsByTagName("body")[0];
+ var isImage = imageurl || imageurl != "" ? true : false;
+ this.createOverlay();
+ this.createContainer(isImage); // autoadded to body
+ this.createCloseButton(this.container); // added to container
+ this.createDescription(desc); // initialize
+ if(isImage) {
+   this.container.appendChild(this.description);
+   this.createImageLoader(imageurl);
+ }else{ 
+    if(!text) return;
+    this.createTextLoader(text);
+    if(desc) {
+     var divider = document.createElement('hr');
+     var dividerCSS = 'width:80%;color:#000;';
+     divider.setAttribute("style", dividerCSS);
+     this.container.appendChild(divider);
+     this.container.appendChild(this.description);
+    }
+  } 
+}
+
+lightBox.createOverlay = function(){
+ this.overlay = document.createElement('div');
+ var overlayCSS = 'position:absolute;width:100%;top:0;left:0;height:100%;background:#000;opacity:0.6;filter:alpha(opacity=0);-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=0);z-index:10000;cursor:pointer';
+ this.overlay.setAttribute('style',overlayCSS);
+ var self = this;
+ this.overlay.onclick = function closeLightBox(){
+   self.fadeOut(self.container, 0, 100);
+   self.body.removeChild(self.overlay);
+   self.body.removeChild(self.container); 
+   self.container = null;
+ }
+ this.body.appendChild(this.overlay);
+}
+
+lightBox.createContainer = function(image){
+ this.container = document.createElement('div');
+ var containerCSS = '';
+ if(image)containerCSS = 'background:white;position:absolute;opacity:0.01;filter:alpha(opacity=0);-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=0);z-index:10001;border:10px solid #fff;text-align:center;';
+ else containerCSS = 'width:400px;display:block;position:absolute;opacity:0;filter:alpha(opacity=0);-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=0);z-index:10001;border:10px solid #fff;background-color:#fff;';
+ this.container.setAttribute('style',containerCSS);
+ this.body.appendChild(this.container);
+}
+
+lightBox.createCloseButton = function(){
+ var close = document.createElement('div');
+ var closeCSS = 'position:absolute;right:-24px;top:-24px;z-index:10003;cursor:pointer;color:#fff;border:2px solid #AEAEAE;border-radius:30px;background:#000;font-size:32px;font-weight:bold;display:inline-block;line-height:0px;padding:11px 3px;'; 
+ close.setAttribute("style", closeCSS);
+ close.innerHTML = '&times;';
+ this.container.appendChild(close);
+ close.onclick = this.overlay.onclick;
+ this.container.appendChild(close);
+}
+
+lightBox.createDescription = function(desc){
+ this.description = document.createElement('div');
+ var descriptionCSS = 'text-align:center;border-bottom:10px solid #fff;border-top:10px solid #fff;background:#fff;';
+ this.description.setAttribute("style", descriptionCSS);
+ if(!desc) desc = "";
+ this.description.innerHTML = '<small>' + desc + '</small>';
+}
+
+lightBox.createImageLoader = function(imageurl){
+ var imageToDisplay = document.createElement('img');
+ imageToDisplayCSS = 'max-height:' + (this.body.clientHeight * 0.80 -20)+'px;';
+ imageToDisplay.setAttribute("style", imageToDisplayCSS);
+ 
+ imageToDisplay.setAttribute('alt', ""); 
+ this.container.appendChild(imageToDisplay);
+ var self = this;
+ imageToDisplay.onload = function onload (){
+   var width = imageToDisplay.clientWidth;
+   var height = imageToDisplay.clientHeight;
+   self.container.style.top = "50%";
+   self.container.style.left = "50%";
+   self.container.style.width = Math.max(200,width) + 'px';
+   var mTop = -height/2;
+   var mLeft = -width/2;
+   self.container.style.marginTop = mTop + 'px';
+   self.container.style.marginLeft = mLeft + 'px'
+ 
+   self.fadeIn(self.container, 1, 100);
+
+   setTimeout(function() {
+	var height = self.container.clientHeight+40;
+	var width = self.container.clientWidth+20;
+	if(height > self.body.clientHeight || width > self.body.clientWidth){
+         if(width > self.body.clientWidth) self.container.style.width = "";
+         imageToDisplay.style.maxWidth = self.body.clientWidth * 0.9 + "px";
+	 imageToDisplay.style.maxHeight =(self.body.clientHeight * 0.80 - 
+                                          self.description.clientHeight -20) + 'px';
+	 height = self.container.clientHeight;
+	}
+	self.container.style.marginTop = - self.container.clientHeight / 2 + 'px';
+	self.container.style.marginLeft = (- self.container.clientWidth / 2 -10) + 'px';
+  }, 100);
+ }
+ imageToDisplay.setAttribute('src', imageurl); 
+}
+
+lightBox.createTextLoader = function(text){
+ var contentTextDiv = document.createElement('div');
+ contentTextDiv.setAttribute("style", "font-size:120%");
+ contentTextDiv.innerHTML = text;
+ this.container.style.maxHeight = (this.body.clientHeight*0.8-40)+"px";
+ this.container.style.overflowX = "hidden"; 
+ this.container.style.overflowY = "auto"; 
+
+ var height = this.container.offsetHeight;
+ this.container.appendChild(contentTextDiv);
+ this.container.style.top = "20%";
+ this.container.style.left = "50%";
+ var mTop = -(height/2);
+ var mLeft = -(this.container.offsetWidth/2);
+ this.container.style.marginLeft = mLeft + 'px';
+ this.fadeIn(this.container, 1, 100);
+}
+
+lightBox.fadeIn = function(element, targetOpacity, timeToFade){
+  var currentOpacity = window.getComputedStyle(element, null).opacity;
+  var interval = false,
+	interval = setInterval(function() {	   
+	   currentOpacity = parseFloat(element.style.opacity);
+	   if (currentOpacity <= targetOpacity) {
+		  currentOpacity += .1;
+		  element.style.opacity = currentOpacity;
+		  element.style.filter = 'alpha(opacity=' + currentOpacity * 100 + ')';
+	   } else {
+		  clearInterval(interval);
+	   }
+	}, timeToFade);
+}
+
+lightBox.fadeOut = function(element, targetOpacity, timeToFade){
+  var currentOpacity = window.getComputedStyle(element, null).opacity;
+  var interval = false,
+        
+	interval = setInterval(function() {	   
+	   currentOpacity = parseFloat(element.style.opacity);
+	   if (currentOpacity > targetOpacity) {
+		  currentOpacity -= .1;
+		  element.style.opacity = currentOpacity;
+		  element.style.filter = 'alpha(opacity=' + currentOpacity * 100 + ')';
+	   } else {
+		  clearInterval(interval);
+	   }
+	}, timeToFade);
+}
+
+*/
+
+/*	SWFObject v2.2 <http://code.google.com/p/swfobject/> 
+	is released under the MIT License <http://www.opensource.org/licenses/mit-license.php> 
+*/
+var swfobject=function(){var D="undefined",r="object",S="Shockwave Flash",W="ShockwaveFlash.ShockwaveFlash",q="application/x-shockwave-flash",R="SWFObjectExprInst",x="onreadystatechange",O=window,j=document,t=navigator,T=false,U=[h],o=[],N=[],I=[],l,Q,E,B,J=false,a=false,n,G,m=true,M=function(){var aa=typeof j.getElementById!=D&&typeof j.getElementsByTagName!=D&&typeof j.createElement!=D,ah=t.userAgent.toLowerCase(),Y=t.platform.toLowerCase(),ae=Y?/win/.test(Y):/win/.test(ah),ac=Y?/mac/.test(Y):/mac/.test(ah),af=/webkit/.test(ah)?parseFloat(ah.replace(/^.*webkit\/(\d+(\.\d+)?).*$/,"$1")):false,X=!+"\v1",ag=[0,0,0],ab=null;if(typeof t.plugins!=D&&typeof t.plugins[S]==r){ab=t.plugins[S].description;if(ab&&!(typeof t.mimeTypes!=D&&t.mimeTypes[q]&&!t.mimeTypes[q].enabledPlugin)){T=true;X=false;ab=ab.replace(/^.*\s+(\S+\s+\S+$)/,"$1");ag[0]=parseInt(ab.replace(/^(.*)\..*$/,"$1"),10);ag[1]=parseInt(ab.replace(/^.*\.(.*)\s.*$/,"$1"),10);ag[2]=/[a-zA-Z]/.test(ab)?parseInt(ab.replace(/^.*[a-zA-Z]+(.*)$/,"$1"),10):0}}else{if(typeof O.ActiveXObject!=D){try{var ad=new ActiveXObject(W);if(ad){ab=ad.GetVariable("$version");if(ab){X=true;ab=ab.split(" ")[1].split(",");ag=[parseInt(ab[0],10),parseInt(ab[1],10),parseInt(ab[2],10)]}}}catch(Z){}}}return{w3:aa,pv:ag,wk:af,ie:X,win:ae,mac:ac}}(),k=function(){if(!M.w3){return}if((typeof j.readyState!=D&&j.readyState=="complete")||(typeof j.readyState==D&&(j.getElementsByTagName("body")[0]||j.body))){f()}if(!J){if(typeof j.addEventListener!=D){j.addEventListener("DOMContentLoaded",f,false)}if(M.ie&&M.win){j.attachEvent(x,function(){if(j.readyState=="complete"){j.detachEvent(x,arguments.callee);f()}});if(O==top){(function(){if(J){return}try{j.documentElement.doScroll("left")}catch(X){setTimeout(arguments.callee,0);return}f()})()}}if(M.wk){(function(){if(J){return}if(!/loaded|complete/.test(j.readyState)){setTimeout(arguments.callee,0);return}f()})()}s(f)}}();function f(){if(J){return}try{var Z=j.getElementsByTagName("body")[0].appendChild(C("span"));Z.parentNode.removeChild(Z)}catch(aa){return}J=true;var X=U.length;for(var Y=0;Y<X;Y++){U[Y]()}}function K(X){if(J){X()}else{U[U.length]=X}}function s(Y){if(typeof O.addEventListener!=D){O.addEventListener("load",Y,false)}else{if(typeof j.addEventListener!=D){j.addEventListener("load",Y,false)}else{if(typeof O.attachEvent!=D){i(O,"onload",Y)}else{if(typeof O.onload=="function"){var X=O.onload;O.onload=function(){X();Y()}}else{O.onload=Y}}}}}function h(){if(T){V()}else{H()}}function V(){var X=j.getElementsByTagName("body")[0];var aa=C(r);aa.setAttribute("type",q);var Z=X.appendChild(aa);if(Z){var Y=0;(function(){if(typeof Z.GetVariable!=D){var ab=Z.GetVariable("$version");if(ab){ab=ab.split(" ")[1].split(",");M.pv=[parseInt(ab[0],10),parseInt(ab[1],10),parseInt(ab[2],10)]}}else{if(Y<10){Y++;setTimeout(arguments.callee,10);return}}X.removeChild(aa);Z=null;H()})()}else{H()}}function H(){var ag=o.length;if(ag>0){for(var af=0;af<ag;af++){var Y=o[af].id;var ab=o[af].callbackFn;var aa={success:false,id:Y};if(M.pv[0]>0){var ae=c(Y);if(ae){if(F(o[af].swfVersion)&&!(M.wk&&M.wk<312)){w(Y,true);if(ab){aa.success=true;aa.ref=z(Y);ab(aa)}}else{if(o[af].expressInstall&&A()){var ai={};ai.data=o[af].expressInstall;ai.width=ae.getAttribute("width")||"0";ai.height=ae.getAttribute("height")||"0";if(ae.getAttribute("class")){ai.styleclass=ae.getAttribute("class")}if(ae.getAttribute("align")){ai.align=ae.getAttribute("align")}var ah={};var X=ae.getElementsByTagName("param");var ac=X.length;for(var ad=0;ad<ac;ad++){if(X[ad].getAttribute("name").toLowerCase()!="movie"){ah[X[ad].getAttribute("name")]=X[ad].getAttribute("value")}}P(ai,ah,Y,ab)}else{p(ae);if(ab){ab(aa)}}}}}else{w(Y,true);if(ab){var Z=z(Y);if(Z&&typeof Z.SetVariable!=D){aa.success=true;aa.ref=Z}ab(aa)}}}}}function z(aa){var X=null;var Y=c(aa);if(Y&&Y.nodeName=="OBJECT"){if(typeof Y.SetVariable!=D){X=Y}else{var Z=Y.getElementsByTagName(r)[0];if(Z){X=Z}}}return X}function A(){return !a&&F("6.0.65")&&(M.win||M.mac)&&!(M.wk&&M.wk<312)}function P(aa,ab,X,Z){a=true;E=Z||null;B={success:false,id:X};var ae=c(X);if(ae){if(ae.nodeName=="OBJECT"){l=g(ae);Q=null}else{l=ae;Q=X}aa.id=R;if(typeof aa.width==D||(!/%$/.test(aa.width)&&parseInt(aa.width,10)<310)){aa.width="310"}if(typeof aa.height==D||(!/%$/.test(aa.height)&&parseInt(aa.height,10)<137)){aa.height="137"}j.title=j.title.slice(0,47)+" - Flash Player Installation";var ad=M.ie&&M.win?"ActiveX":"PlugIn",ac="MMredirectURL="+O.location.toString().replace(/&/g,"%26")+"&MMplayerType="+ad+"&MMdoctitle="+j.title;if(typeof ab.flashvars!=D){ab.flashvars+="&"+ac}else{ab.flashvars=ac}if(M.ie&&M.win&&ae.readyState!=4){var Y=C("div");X+="SWFObjectNew";Y.setAttribute("id",X);ae.parentNode.insertBefore(Y,ae);ae.style.display="none";(function(){if(ae.readyState==4){ae.parentNode.removeChild(ae)}else{setTimeout(arguments.callee,10)}})()}u(aa,ab,X)}}function p(Y){if(M.ie&&M.win&&Y.readyState!=4){var X=C("div");Y.parentNode.insertBefore(X,Y);X.parentNode.replaceChild(g(Y),X);Y.style.display="none";(function(){if(Y.readyState==4){Y.parentNode.removeChild(Y)}else{setTimeout(arguments.callee,10)}})()}else{Y.parentNode.replaceChild(g(Y),Y)}}function g(ab){var aa=C("div");if(M.win&&M.ie){aa.innerHTML=ab.innerHTML}else{var Y=ab.getElementsByTagName(r)[0];if(Y){var ad=Y.childNodes;if(ad){var X=ad.length;for(var Z=0;Z<X;Z++){if(!(ad[Z].nodeType==1&&ad[Z].nodeName=="PARAM")&&!(ad[Z].nodeType==8)){aa.appendChild(ad[Z].cloneNode(true))}}}}}return aa}function u(ai,ag,Y){var X,aa=c(Y);if(M.wk&&M.wk<312){return X}if(aa){if(typeof ai.id==D){ai.id=Y}if(M.ie&&M.win){var ah="";for(var ae in ai){if(ai[ae]!=Object.prototype[ae]){if(ae.toLowerCase()=="data"){ag.movie=ai[ae]}else{if(ae.toLowerCase()=="styleclass"){ah+=' class="'+ai[ae]+'"'}else{if(ae.toLowerCase()!="classid"){ah+=" "+ae+'="'+ai[ae]+'"'}}}}}var af="";for(var ad in ag){if(ag[ad]!=Object.prototype[ad]){af+='<param name="'+ad+'" value="'+ag[ad]+'" />'}}aa.outerHTML='<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"'+ah+">"+af+"</object>";N[N.length]=ai.id;X=c(ai.id)}else{var Z=C(r);Z.setAttribute("type",q);for(var ac in ai){if(ai[ac]!=Object.prototype[ac]){if(ac.toLowerCase()=="styleclass"){Z.setAttribute("class",ai[ac])}else{if(ac.toLowerCase()!="classid"){Z.setAttribute(ac,ai[ac])}}}}for(var ab in ag){if(ag[ab]!=Object.prototype[ab]&&ab.toLowerCase()!="movie"){e(Z,ab,ag[ab])}}aa.parentNode.replaceChild(Z,aa);X=Z}}return X}function e(Z,X,Y){var aa=C("param");aa.setAttribute("name",X);aa.setAttribute("value",Y);Z.appendChild(aa)}function y(Y){var X=c(Y);if(X&&X.nodeName=="OBJECT"){if(M.ie&&M.win){X.style.display="none";(function(){if(X.readyState==4){b(Y)}else{setTimeout(arguments.callee,10)}})()}else{X.parentNode.removeChild(X)}}}function b(Z){var Y=c(Z);if(Y){for(var X in Y){if(typeof Y[X]=="function"){Y[X]=null}}Y.parentNode.removeChild(Y)}}function c(Z){var X=null;try{X=j.getElementById(Z)}catch(Y){}return X}function C(X){return j.createElement(X)}function i(Z,X,Y){Z.attachEvent(X,Y);I[I.length]=[Z,X,Y]}function F(Z){var Y=M.pv,X=Z.split(".");X[0]=parseInt(X[0],10);X[1]=parseInt(X[1],10)||0;X[2]=parseInt(X[2],10)||0;return(Y[0]>X[0]||(Y[0]==X[0]&&Y[1]>X[1])||(Y[0]==X[0]&&Y[1]==X[1]&&Y[2]>=X[2]))?true:false}function v(ac,Y,ad,ab){if(M.ie&&M.mac){return}var aa=j.getElementsByTagName("head")[0];if(!aa){return}var X=(ad&&typeof ad=="string")?ad:"screen";if(ab){n=null;G=null}if(!n||G!=X){var Z=C("style");Z.setAttribute("type","text/css");Z.setAttribute("media",X);n=aa.appendChild(Z);if(M.ie&&M.win&&typeof j.styleSheets!=D&&j.styleSheets.length>0){n=j.styleSheets[j.styleSheets.length-1]}G=X}if(M.ie&&M.win){if(n&&typeof n.addRule==r){n.addRule(ac,Y)}}else{if(n&&typeof j.createTextNode!=D){n.appendChild(j.createTextNode(ac+" {"+Y+"}"))}}}function w(Z,X){if(!m){return}var Y=X?"visible":"hidden";if(J&&c(Z)){c(Z).style.visibility=Y}else{v("#"+Z,"visibility:"+Y)}}function L(Y){var Z=/[\\\"<>\.;]/;var X=Z.exec(Y)!=null;return X&&typeof encodeURIComponent!=D?encodeURIComponent(Y):Y}var d=function(){if(M.ie&&M.win){window.attachEvent("onunload",function(){var ac=I.length;for(var ab=0;ab<ac;ab++){I[ab][0].detachEvent(I[ab][1],I[ab][2])}var Z=N.length;for(var aa=0;aa<Z;aa++){y(N[aa])}for(var Y in M){M[Y]=null}M=null;for(var X in swfobject){swfobject[X]=null}swfobject=null})}}();return{registerObject:function(ab,X,aa,Z){if(M.w3&&ab&&X){var Y={};Y.id=ab;Y.swfVersion=X;Y.expressInstall=aa;Y.callbackFn=Z;o[o.length]=Y;w(ab,false)}else{if(Z){Z({success:false,id:ab})}}},getObjectById:function(X){if(M.w3){return z(X)}},embedSWF:function(ab,ah,ae,ag,Y,aa,Z,ad,af,ac){var X={success:false,id:ah};if(M.w3&&!(M.wk&&M.wk<312)&&ab&&ah&&ae&&ag&&Y){w(ah,false);K(function(){ae+="";ag+="";var aj={};if(af&&typeof af===r){for(var al in af){aj[al]=af[al]}}aj.data=ab;aj.width=ae;aj.height=ag;var am={};if(ad&&typeof ad===r){for(var ak in ad){am[ak]=ad[ak]}}if(Z&&typeof Z===r){for(var ai in Z){if(typeof am.flashvars!=D){am.flashvars+="&"+ai+"="+Z[ai]}else{am.flashvars=ai+"="+Z[ai]}}}if(F(Y)){var an=u(aj,am,ah);if(aj.id==ah){w(ah,true)}X.success=true;X.ref=an}else{if(aa&&A()){aj.data=aa;P(aj,am,ah,ac);return}else{w(ah,true)}}if(ac){ac(X)}})}else{if(ac){ac(X)}}},switchOffAutoHideShow:function(){m=false},ua:M,getFlashPlayerVersion:function(){return{major:M.pv[0],minor:M.pv[1],release:M.pv[2]}},hasFlashPlayerVersion:F,createSWF:function(Z,Y,X){if(M.w3){return u(Z,Y,X)}else{return undefined}},showExpressInstall:function(Z,aa,X,Y){if(M.w3&&A()){P(Z,aa,X,Y)}},removeSWF:function(X){if(M.w3){y(X)}},createCSS:function(aa,Z,Y,X){if(M.w3){v(aa,Z,Y,X)}},addDomLoadEvent:K,addLoadEvent:s,getQueryParamValue:function(aa){var Z=j.location.search||j.location.hash;if(Z){if(/\?/.test(Z)){Z=Z.split("?")[1]}if(aa==null){return L(Z)}var Y=Z.split("&");for(var X=0;X<Y.length;X++){if(Y[X].substring(0,Y[X].indexOf("="))==aa){return L(Y[X].substring((Y[X].indexOf("=")+1)))}}}return""},expressInstallCallback:function(){if(a){var X=c(R);if(X&&l){X.parentNode.replaceChild(l,X);if(Q){w(Q,true);if(M.ie&&M.win){l.style.display="block"}}if(E){E(B)}}a=false}}}}();
+
+/**
+*
+*  MD5 (Message-Digest Algorithm)
+*  http://www.webtoolkit.info/
+*
+**/
+ 
+function MD5 (string) {
+ 
+	function RotateLeft(lValue, iShiftBits) {
+		return (lValue<<iShiftBits) | (lValue>>>(32-iShiftBits));
+	}
+ 
+	function AddUnsigned(lX,lY) {
+		var lX4,lY4,lX8,lY8,lResult;
+		lX8 = (lX & 0x80000000);
+		lY8 = (lY & 0x80000000);
+		lX4 = (lX & 0x40000000);
+		lY4 = (lY & 0x40000000);
+		lResult = (lX & 0x3FFFFFFF)+(lY & 0x3FFFFFFF);
+		if (lX4 & lY4) {
+			return (lResult ^ 0x80000000 ^ lX8 ^ lY8);
+		}
+		if (lX4 | lY4) {
+			if (lResult & 0x40000000) {
+				return (lResult ^ 0xC0000000 ^ lX8 ^ lY8);
+			} else {
+				return (lResult ^ 0x40000000 ^ lX8 ^ lY8);
+			}
+		} else {
+			return (lResult ^ lX8 ^ lY8);
+		}
+ 	}
+ 
+ 	function F(x,y,z) { return (x & y) | ((~x) & z); }
+ 	function G(x,y,z) { return (x & z) | (y & (~z)); }
+ 	function H(x,y,z) { return (x ^ y ^ z); }
+	function I(x,y,z) { return (y ^ (x | (~z))); }
+ 
+	function FF(a,b,c,d,x,s,ac) {
+		a = AddUnsigned(a, AddUnsigned(AddUnsigned(F(b, c, d), x), ac));
+		return AddUnsigned(RotateLeft(a, s), b);
+	};
+ 
+	function GG(a,b,c,d,x,s,ac) {
+		a = AddUnsigned(a, AddUnsigned(AddUnsigned(G(b, c, d), x), ac));
+		return AddUnsigned(RotateLeft(a, s), b);
+	};
+ 
+	function HH(a,b,c,d,x,s,ac) {
+		a = AddUnsigned(a, AddUnsigned(AddUnsigned(H(b, c, d), x), ac));
+		return AddUnsigned(RotateLeft(a, s), b);
+	};
+ 
+	function II(a,b,c,d,x,s,ac) {
+		a = AddUnsigned(a, AddUnsigned(AddUnsigned(I(b, c, d), x), ac));
+		return AddUnsigned(RotateLeft(a, s), b);
+	};
+ 
+	function ConvertToWordArray(string) {
+		var lWordCount;
+		var lMessageLength = string.length;
+		var lNumberOfWords_temp1=lMessageLength + 8;
+		var lNumberOfWords_temp2=(lNumberOfWords_temp1-(lNumberOfWords_temp1 % 64))/64;
+		var lNumberOfWords = (lNumberOfWords_temp2+1)*16;
+		var lWordArray=Array(lNumberOfWords-1);
+		var lBytePosition = 0;
+		var lByteCount = 0;
+		while ( lByteCount < lMessageLength ) {
+			lWordCount = (lByteCount-(lByteCount % 4))/4;
+			lBytePosition = (lByteCount % 4)*8;
+			lWordArray[lWordCount] = (lWordArray[lWordCount] | (string.charCodeAt(lByteCount)<<lBytePosition));
+			lByteCount++;
+		}
+		lWordCount = (lByteCount-(lByteCount % 4))/4;
+		lBytePosition = (lByteCount % 4)*8;
+		lWordArray[lWordCount] = lWordArray[lWordCount] | (0x80<<lBytePosition);
+		lWordArray[lNumberOfWords-2] = lMessageLength<<3;
+		lWordArray[lNumberOfWords-1] = lMessageLength>>>29;
+		return lWordArray;
+	};
+ 
+	function WordToHex(lValue) {
+		var WordToHexValue="",WordToHexValue_temp="",lByte,lCount;
+		for (lCount = 0;lCount<=3;lCount++) {
+			lByte = (lValue>>>(lCount*8)) & 255;
+			WordToHexValue_temp = "0" + lByte.toString(16);
+			WordToHexValue = WordToHexValue + WordToHexValue_temp.substr(WordToHexValue_temp.length-2,2);
+		}
+		return WordToHexValue;
+	};
+ 
+	function Utf8Encode(string) {
+		string = string.replace(/\r\n/g,"\n");
+		var utftext = "";
+ 
+		for (var n = 0; n < string.length; n++) {
+ 
+			var c = string.charCodeAt(n);
+ 
+			if (c < 128) {
+				utftext += String.fromCharCode(c);
+			}
+			else if((c > 127) && (c < 2048)) {
+				utftext += String.fromCharCode((c >> 6) | 192);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+			else {
+				utftext += String.fromCharCode((c >> 12) | 224);
+				utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+ 
+		}
+ 
+		return utftext;
+	};
+ 
+	var x=Array();
+	var k,AA,BB,CC,DD,a,b,c,d;
+	var S11=7, S12=12, S13=17, S14=22;
+	var S21=5, S22=9 , S23=14, S24=20;
+	var S31=4, S32=11, S33=16, S34=23;
+	var S41=6, S42=10, S43=15, S44=21;
+ 
+	string = Utf8Encode(string);
+ 
+	x = ConvertToWordArray(string);
+ 
+	a = 0x67452301; b = 0xEFCDAB89; c = 0x98BADCFE; d = 0x10325476;
+ 
+	for (k=0;k<x.length;k+=16) {
+		AA=a; BB=b; CC=c; DD=d;
+		a=FF(a,b,c,d,x[k+0], S11,0xD76AA478);
+		d=FF(d,a,b,c,x[k+1], S12,0xE8C7B756);
+		c=FF(c,d,a,b,x[k+2], S13,0x242070DB);
+		b=FF(b,c,d,a,x[k+3], S14,0xC1BDCEEE);
+		a=FF(a,b,c,d,x[k+4], S11,0xF57C0FAF);
+		d=FF(d,a,b,c,x[k+5], S12,0x4787C62A);
+		c=FF(c,d,a,b,x[k+6], S13,0xA8304613);
+		b=FF(b,c,d,a,x[k+7], S14,0xFD469501);
+		a=FF(a,b,c,d,x[k+8], S11,0x698098D8);
+		d=FF(d,a,b,c,x[k+9], S12,0x8B44F7AF);
+		c=FF(c,d,a,b,x[k+10],S13,0xFFFF5BB1);
+		b=FF(b,c,d,a,x[k+11],S14,0x895CD7BE);
+		a=FF(a,b,c,d,x[k+12],S11,0x6B901122);
+		d=FF(d,a,b,c,x[k+13],S12,0xFD987193);
+		c=FF(c,d,a,b,x[k+14],S13,0xA679438E);
+		b=FF(b,c,d,a,x[k+15],S14,0x49B40821);
+		a=GG(a,b,c,d,x[k+1], S21,0xF61E2562);
+		d=GG(d,a,b,c,x[k+6], S22,0xC040B340);
+		c=GG(c,d,a,b,x[k+11],S23,0x265E5A51);
+		b=GG(b,c,d,a,x[k+0], S24,0xE9B6C7AA);
+		a=GG(a,b,c,d,x[k+5], S21,0xD62F105D);
+		d=GG(d,a,b,c,x[k+10],S22,0x2441453);
+		c=GG(c,d,a,b,x[k+15],S23,0xD8A1E681);
+		b=GG(b,c,d,a,x[k+4], S24,0xE7D3FBC8);
+		a=GG(a,b,c,d,x[k+9], S21,0x21E1CDE6);
+		d=GG(d,a,b,c,x[k+14],S22,0xC33707D6);
+		c=GG(c,d,a,b,x[k+3], S23,0xF4D50D87);
+		b=GG(b,c,d,a,x[k+8], S24,0x455A14ED);
+		a=GG(a,b,c,d,x[k+13],S21,0xA9E3E905);
+		d=GG(d,a,b,c,x[k+2], S22,0xFCEFA3F8);
+		c=GG(c,d,a,b,x[k+7], S23,0x676F02D9);
+		b=GG(b,c,d,a,x[k+12],S24,0x8D2A4C8A);
+		a=HH(a,b,c,d,x[k+5], S31,0xFFFA3942);
+		d=HH(d,a,b,c,x[k+8], S32,0x8771F681);
+		c=HH(c,d,a,b,x[k+11],S33,0x6D9D6122);
+		b=HH(b,c,d,a,x[k+14],S34,0xFDE5380C);
+		a=HH(a,b,c,d,x[k+1], S31,0xA4BEEA44);
+		d=HH(d,a,b,c,x[k+4], S32,0x4BDECFA9);
+		c=HH(c,d,a,b,x[k+7], S33,0xF6BB4B60);
+		b=HH(b,c,d,a,x[k+10],S34,0xBEBFBC70);
+		a=HH(a,b,c,d,x[k+13],S31,0x289B7EC6);
+		d=HH(d,a,b,c,x[k+0], S32,0xEAA127FA);
+		c=HH(c,d,a,b,x[k+3], S33,0xD4EF3085);
+		b=HH(b,c,d,a,x[k+6], S34,0x4881D05);
+		a=HH(a,b,c,d,x[k+9], S31,0xD9D4D039);
+		d=HH(d,a,b,c,x[k+12],S32,0xE6DB99E5);
+		c=HH(c,d,a,b,x[k+15],S33,0x1FA27CF8);
+		b=HH(b,c,d,a,x[k+2], S34,0xC4AC5665);
+		a=II(a,b,c,d,x[k+0], S41,0xF4292244);
+		d=II(d,a,b,c,x[k+7], S42,0x432AFF97);
+		c=II(c,d,a,b,x[k+14],S43,0xAB9423A7);
+		b=II(b,c,d,a,x[k+5], S44,0xFC93A039);
+		a=II(a,b,c,d,x[k+12],S41,0x655B59C3);
+		d=II(d,a,b,c,x[k+3], S42,0x8F0CCC92);
+		c=II(c,d,a,b,x[k+10],S43,0xFFEFF47D);
+		b=II(b,c,d,a,x[k+1], S44,0x85845DD1);
+		a=II(a,b,c,d,x[k+8], S41,0x6FA87E4F);
+		d=II(d,a,b,c,x[k+15],S42,0xFE2CE6E0);
+		c=II(c,d,a,b,x[k+6], S43,0xA3014314);
+		b=II(b,c,d,a,x[k+13],S44,0x4E0811A1);
+		a=II(a,b,c,d,x[k+4], S41,0xF7537E82);
+		d=II(d,a,b,c,x[k+11],S42,0xBD3AF235);
+		c=II(c,d,a,b,x[k+2], S43,0x2AD7D2BB);
+		b=II(b,c,d,a,x[k+9], S44,0xEB86D391);
+		a=AddUnsigned(a,AA);
+		b=AddUnsigned(b,BB);
+		c=AddUnsigned(c,CC);
+		d=AddUnsigned(d,DD);
+	}
+ 
+	var temp = WordToHex(a)+WordToHex(b)+WordToHex(c)+WordToHex(d);
+ 
+	return temp.toLowerCase();
+}
+function md5(str) {return MD5(str);}
+/* *******************************************
+// Copyright 2010-2011, Anthony Hand
+//
+// File version date: August 22, 2011
+//              Update: 
+//              - Updated DetectAndroidTablet() to fix a bug introduced in the last fix! The true/false returns were mixed up. 
+//
+// File version date: August 16, 2011
+//              Update: 
+//              - Updated DetectAndroidTablet() to exclude Opera Mini, which was falsely reporting as running on a tablet device when on a phone.
+//              - Updated the user agent (uagent) init technique to handle spiders and such with null values.
+//
+// File version date: August 7, 2011
+//              Update: 
+//              - The Opera for Android browser doesn't follow Google's recommended useragent string guidelines, so some fixes were needed.
+//              - Updated DetectAndroidPhone() and DetectAndroidTablet() to properly detect devices running Opera Mobile.
+//              - Created 2 new methods: DetectOperaAndroidPhone() and DetectOperaAndroidTablet(). 
+//              - Updated DetectTierIphone(). Removed the call to DetectMaemoTablet(), an obsolete mobile OS.
+//
+// File version date: July 15, 2011
+//              Update: 
+//              - Refactored the variable called maemoTablet. Its new name is the more generic deviceTablet.
+//              - Created the variable deviceWebOShp for HP's line of WebOS devices starting with the TouchPad tablet.
+//              - Created the DetectWebOSTablet() method for HP's line of WebOS tablets starting with the TouchPad tablet.
+//              - Updated the DetectTierTablet() method to also search for WebOS tablets. 
+//              - Updated the DetectMaemoTablet() method to disambiguate against WebOS tablets which share some signature traits. 
+//
+//
+// LICENSE INFORMATION
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License. 
+// You may obtain a copy of the License at 
+//        http://www.apache.org/licenses/LICENSE-2.0 
+// Unless required by applicable law or agreed to in writing, 
+// software distributed under the License is distributed on an 
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific 
+// language governing permissions and limitations under the License. 
+//
+//
+// ABOUT THIS PROJECT
+//   Project Owner: Anthony Hand
+//   Email: anthony.hand@gmail.com
+//   Web Site: http://www.mobileesp.com
+//   Source Files: http://code.google.com/p/mobileesp/
+//   
+//   Versions of this code are available for:
+//      PHP, JavaScript, Java, ASP.NET (C#), and Ruby
+//
+//
+// WARNING: 
+//   These JavaScript-based device detection features may ONLY work 
+//   for the newest generation of smartphones, such as the iPhone, 
+//   Android and Palm WebOS devices.
+//   These device detection features may NOT work for older smartphones 
+//   which had poor support for JavaScript, including 
+//   older BlackBerry, PalmOS, and Windows Mobile devices. 
+//   Additionally, because JavaScript support is extremely poor among 
+//   'feature phones', these features may not work at all on such devices.
+//   For better results, consider using a server-based version of this code, 
+//   such as Java, APS.NET, PHP, or Ruby.
+//
+// *******************************************
+*/
+
+//Optional: Store values for quickly accessing same info multiple times.
+//Note: These values are not set automatically.
+//Stores whether the device is an iPhone or iPod Touch.
+var isIphone = false; 
+//Stores whether the device is an Android phone or multi-media player.
+var isAndroidPhone = false; 
+//Stores whether is the Tablet (HTML5-capable, larger screen) tier of devices.
+var isTierTablet = false; 
+//Stores whether is the iPhone tier of devices.
+var isTierIphone = false; 
+//Stores whether the device can probably support Rich CSS, but JavaScript support is not assumed. (e.g., newer BlackBerry, Windows Mobile)
+var isTierRichCss = false; 
+//Stores whether it is another mobile device, which cannot be assumed to support CSS or JS (eg, older BlackBerry, RAZR)
+var isTierGenericMobile = false; 
+
+//Initialize some initial string variables we'll look for later.
+var engineWebKit = "webkit";
+var deviceIphone = "iphone";
+var deviceIpod = "ipod";
+var deviceIpad = "ipad";
+var deviceMacPpc = "macintosh"; //Used for disambiguation
+
+var deviceAndroid = "android";
+var deviceGoogleTV = "googletv";
+var deviceXoom = "xoom"; //Motorola Xoom
+var deviceHtcFlyer = "htc_flyer"; //HTC Flyer
+
+var deviceNuvifone = "nuvifone"; //Garmin Nuvifone
+
+var deviceSymbian = "symbian";
+var deviceS60 = "series60";
+var deviceS70 = "series70";
+var deviceS80 = "series80";
+var deviceS90 = "series90";
+
+var deviceWinPhone7 = "windows phone os 7"; 
+var deviceWinMob = "windows ce";
+var deviceWindows = "windows";
+var deviceIeMob = "iemobile";
+var devicePpc = "ppc"; //Stands for PocketPC
+var enginePie = "wm5 pie";  //An old Windows Mobile
+
+var deviceBB = "blackberry";
+var vndRIM = "vnd.rim"; //Detectable when BB devices emulate IE or Firefox
+var deviceBBStorm = "blackberry95"; //Storm 1 and 2
+var deviceBBBold = "blackberry97"; //Bold
+var deviceBBTour = "blackberry96"; //Tour
+var deviceBBCurve = "blackberry89"; //Curve 2
+var deviceBBTorch = "blackberry 98"; //Torch
+var deviceBBPlaybook = "playbook"; //PlayBook tablet
+
+var devicePalm = "palm";
+var deviceWebOS = "webos"; //For Palm's line of WebOS devices
+var deviceWebOShp = "hpwos"; //For HP's line of WebOS devices
+
+var engineBlazer = "blazer"; //Old Palm browser
+var engineXiino = "xiino";
+
+var deviceKindle = "kindle"; //Amazon Kindle, eInk one.
+
+//Initialize variables for mobile-specific content.
+var vndwap = "vnd.wap";
+var wml = "wml";
+
+//Initialize variables for random devices and mobile browsers.
+//Some of these may not support JavaScript
+var deviceTablet = "tablet"; //Generic term for slate and tablet devices
+var deviceBrew = "brew";
+var deviceDanger = "danger";
+var deviceHiptop = "hiptop";
+var devicePlaystation = "playstation";
+var deviceNintendoDs = "nitro";
+var deviceNintendo = "nintendo";
+var deviceWii = "wii";
+var deviceXbox = "xbox";
+var deviceArchos = "archos";
+
+var engineOpera = "opera"; //Popular browser
+var engineNetfront = "netfront"; //Common embedded OS browser
+var engineUpBrowser = "up.browser"; //common on some phones
+var engineOpenWeb = "openweb"; //Transcoding by OpenWave server
+var deviceMidp = "midp"; //a mobile Java technology
+var uplink = "up.link";
+var engineTelecaQ = 'teleca q'; //a modern feature phone browser
+
+var devicePda = "pda";
+var mini = "mini";  //Some mobile browsers put 'mini' in their names.
+var mobile = "mobile"; //Some mobile browsers put 'mobile' in their user agent strings.
+var mobi = "mobi"; //Some mobile browsers put 'mobi' in their user agent strings.
+
+//Use Maemo, Tablet, and Linux to test for Nokia's Internet Tablets.
+var maemo = "maemo";
+var linux = "linux";
+var qtembedded = "qt embedded"; //for Sony Mylo and others
+var mylocom2 = "com2"; //for Sony Mylo also
+
+//In some UserAgents, the only clue is the manufacturer.
+var manuSonyEricsson = "sonyericsson";
+var manuericsson = "ericsson";
+var manuSamsung1 = "sec-sgh";
+var manuSony = "sony";
+var manuHtc = "htc"; //Popular Android and WinMo manufacturer
+
+//In some UserAgents, the only clue is the operator.
+var svcDocomo = "docomo";
+var svcKddi = "kddi";
+var svcVodafone = "vodafone";
+
+//Disambiguation strings.
+var disUpdate = "update"; //pda vs. update
+
+
+
+//Initialize our user agent string.
+var uagent = "";
+if (navigator && navigator.userAgent)
+    uagent = navigator.userAgent.toLowerCase();
+
+
+//**************************
+// Detects if the current device is an iPhone.
+function DetectIphone()
+{
+   if (uagent.search(deviceIphone) > -1)
+   {
+      //The iPad and iPod Touch say they're an iPhone! So let's disambiguate.
+      if (DetectIpad() || DetectIpod())
+         return false;
+      //Yay! It's an iPhone!
+      else 
+         return true;
+   }
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current device is an iPod Touch.
+function DetectIpod()
+{
+   if (uagent.search(deviceIpod) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current device is an iPad tablet.
+function DetectIpad()
+{
+   if (uagent.search(deviceIpad) > -1  && DetectWebkit())
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current device is an iPhone or iPod Touch.
+function DetectIphoneOrIpod()
+{
+   //We repeat the searches here because some iPods 
+   //  may report themselves as an iPhone, which is ok.
+   if (uagent.search(deviceIphone) > -1 ||
+       uagent.search(deviceIpod) > -1)
+       return true;
+    else
+       return false;
+}
+
+//**************************
+// Detects *any* iOS device: iPhone, iPod Touch, iPad.
+function DetectIos()
+{
+   if (DetectIphoneOrIpod() || DetectIpad())
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects *any* Android OS-based device: phone, tablet, and multi-media player.
+// Also detects Google TV.
+function DetectAndroid()
+{
+   if ((uagent.search(deviceAndroid) > -1) || DetectGoogleTV())
+      return true;
+   //Special check for the HTC Flyer 7" tablet. It should report here.
+   if (uagent.search(deviceHtcFlyer) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current device is a (small-ish) Android OS-based device
+// used for calling and/or multi-media (like a Samsung Galaxy Player).
+// Google says these devices will have 'Android' AND 'mobile' in user agent.
+// Ignores tablets (Honeycomb and later).
+function DetectAndroidPhone()
+{
+   if (DetectAndroid() && (uagent.search(mobile) > -1))
+      return true;
+   //Special check for Android phones with Opera Mobile. They should report here.
+   if (DetectOperaAndroidPhone())
+      return true;
+   //Special check for the HTC Flyer 7" tablet. It should report here.
+   if (uagent.search(deviceHtcFlyer) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current device is a (self-reported) Android tablet.
+// Google says these devices will have 'Android' and NOT 'mobile' in their user agent.
+function DetectAndroidTablet()
+{
+   //First, let's make sure we're on an Android device.
+   if (!DetectAndroid())
+      return false;
+
+   //Special check for Opera Android Phones. They should NOT report here.
+   if (DetectOperaMobile())
+      return false;
+   //Special check for the HTC Flyer 7" tablet. It should NOT report here.
+   if (uagent.search(deviceHtcFlyer) > -1)
+      return false;
+         
+   //Otherwise, if it's Android and does NOT have 'mobile' in it, Google says it's a tablet.
+   if (uagent.search(mobile) > -1)
+      return false;
+   else
+      return true;
+}
+
+
+//**************************
+// Detects if the current device is an Android OS-based device and
+//   the browser is based on WebKit.
+function DetectAndroidWebKit()
+{
+   if (DetectAndroid() && DetectWebkit())
+      return true;
+   else
+      return false;
+}
+
+
+//**************************
+// Detects if the current device is a GoogleTV.
+function DetectGoogleTV()
+{
+   if (uagent.search(deviceGoogleTV) > -1)
+      return true;
+   else
+      return false;
+}
+
+
+//**************************
+// Detects if the current browser is based on WebKit.
+function DetectWebkit()
+{
+   if (uagent.search(engineWebKit) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is the Nokia S60 Open Source Browser.
+function DetectS60OssBrowser()
+{
+   if (DetectWebkit())
+   {
+     if ((uagent.search(deviceS60) > -1 || 
+          uagent.search(deviceSymbian) > -1))
+        return true;
+     else
+        return false;
+   }
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current device is any Symbian OS-based device,
+//   including older S60, Series 70, Series 80, Series 90, and UIQ, 
+//   or other browsers running on these devices.
+function DetectSymbianOS()
+{
+   if (uagent.search(deviceSymbian) > -1 ||
+       uagent.search(deviceS60) > -1 ||
+       uagent.search(deviceS70) > -1 ||
+       uagent.search(deviceS80) > -1 ||
+       uagent.search(deviceS90) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is a 
+// Windows Phone 7 device.
+function DetectWindowsPhone7()
+{
+   if (uagent.search(deviceWinPhone7) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is a Windows Mobile device.
+// Excludes Windows Phone 7 devices. 
+// Focuses on Windows Mobile 6.xx and earlier.
+function DetectWindowsMobile()
+{
+   //Exclude new Windows Phone 7.
+   if (DetectWindowsPhone7())
+      return false;
+   //Most devices use 'Windows CE', but some report 'iemobile' 
+   //  and some older ones report as 'PIE' for Pocket IE. 
+   if (uagent.search(deviceWinMob) > -1 ||
+       uagent.search(deviceIeMob) > -1 ||
+       uagent.search(enginePie) > -1)
+      return true;
+   //Test for Windows Mobile PPC but not old Macintosh PowerPC.
+   if ((uagent.search(devicePpc) > -1) && 
+       !(uagent.search(deviceMacPpc) > -1))
+      return true;
+   //Test for Windwos Mobile-based HTC devices.
+   if (uagent.search(manuHtc) > -1 &&
+       uagent.search(deviceWindows) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is a BlackBerry of some sort.
+// Includes the PlayBook.
+function DetectBlackBerry()
+{
+   if (uagent.search(deviceBB) > -1)
+      return true;
+   if (uagent.search(vndRIM) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is on a BlackBerry tablet device.
+//    Example: PlayBook
+function DetectBlackBerryTablet()
+{
+   if (uagent.search(deviceBBPlaybook) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is a BlackBerry device AND uses a
+//    WebKit-based browser. These are signatures for the new BlackBerry OS 6.
+//    Examples: Torch. Includes the Playbook.
+function DetectBlackBerryWebKit()
+{
+   if (DetectBlackBerry() &&
+       uagent.search(engineWebKit) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is a BlackBerry Touch
+//    device, such as the Storm or Torch. Excludes the Playbook.
+function DetectBlackBerryTouch()
+{
+   if (DetectBlackBerry() &&
+        ((uagent.search(deviceBBStorm) > -1) ||
+        (uagent.search(deviceBBTorch) > -1)))
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is a BlackBerry OS 5 device AND
+//    has a more capable recent browser. Excludes the Playbook.
+//    Examples, Storm, Bold, Tour, Curve2
+//    Excludes the new BlackBerry OS 6 browser!!
+function DetectBlackBerryHigh()
+{
+   //Disambiguate for BlackBerry OS 6 (WebKit) browser
+   if (DetectBlackBerryWebKit())
+      return false;
+   if (DetectBlackBerry())
+   {
+     if (DetectBlackBerryTouch() ||
+        uagent.search(deviceBBBold) > -1 || 
+        uagent.search(deviceBBTour) > -1 || 
+        uagent.search(deviceBBCurve) > -1)
+        return true;
+     else
+        return false;
+   }
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is a BlackBerry device AND
+//    has an older, less capable browser. 
+//    Examples: Pearl, 8800, Curve1.
+function DetectBlackBerryLow()
+{
+   if (DetectBlackBerry())
+   {
+     //Assume that if it's not in the High tier or has WebKit, then it's Low.
+     if (DetectBlackBerryHigh() || DetectBlackBerryWebKit())
+        return false;
+     else
+        return true;
+   }
+   else
+      return false;
+}
+
+
+//**************************
+// Detects if the current browser is on a PalmOS device.
+function DetectPalmOS()
+{
+   //Most devices nowadays report as 'Palm', 
+   //  but some older ones reported as Blazer or Xiino.
+   if (uagent.search(devicePalm) > -1 ||
+       uagent.search(engineBlazer) > -1 ||
+       uagent.search(engineXiino) > -1)
+   {
+     //Make sure it's not WebOS first
+     if (DetectPalmWebOS())
+        return false;
+     else
+        return true;
+   }
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is on a Palm device
+//   running the new WebOS.
+function DetectPalmWebOS()
+{
+   if (uagent.search(deviceWebOS) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is on an HP tablet running WebOS.
+function DetectWebOSTablet()
+{
+   if (uagent.search(deviceWebOShp) > -1 &&
+       uagent.search(deviceTablet) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is a
+//   Garmin Nuvifone.
+function DetectGarminNuvifone()
+{
+   if (uagent.search(deviceNuvifone) > -1)
+      return true;
+   else
+      return false;
+}
+
+
+//**************************
+// Check to see whether the device is a 'smartphone'.
+//   You might wish to send smartphones to a more capable web page
+//   than a dumbed down WAP page. 
+function DetectSmartphone()
+{
+   if (DetectIphoneOrIpod() 
+      || DetectAndroidPhone()
+      || DetectS60OssBrowser()
+      || DetectSymbianOS()
+      || DetectWindowsMobile()
+      || DetectWindowsPhone7()
+      || DetectBlackBerry()
+      || DetectPalmWebOS()
+      || DetectPalmOS()
+      || DetectGarminNuvifone())
+      return true;
+
+   //Otherwise, return false.
+   return false;
+};
+
+//**************************
+// Detects if the current device is an Archos media player/Internet tablet.
+function DetectArchos()
+{
+   if (uagent.search(deviceArchos) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects whether the device is a Brew-powered device.
+function DetectBrewDevice()
+{
+   if (uagent.search(deviceBrew) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects the Danger Hiptop device.
+function DetectDangerHiptop()
+{
+   if (uagent.search(deviceDanger) > -1 ||
+       uagent.search(deviceHiptop) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current device is on one of 
+// the Maemo-based Nokia Internet Tablets.
+function DetectMaemoTablet()
+{
+   if (uagent.search(maemo) > -1)
+      return true;
+   //For Nokia N810, must be Linux + Tablet, or else it could be something else.
+   if ((uagent.search(linux) > -1) 
+       && (uagent.search(deviceTablet) > -1)
+       && !DetectWebOSTablet()
+       && !DetectAndroid())
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is a Sony Mylo device.
+function DetectSonyMylo()
+{
+   if (uagent.search(manuSony) > -1)
+   {
+     if (uagent.search(qtembedded) > -1 ||
+         uagent.search(mylocom2) > -1)
+        return true;
+     else
+        return false;
+   }
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is Opera Mobile or Mini.
+function DetectOperaMobile()
+{
+   if (uagent.search(engineOpera) > -1)
+   {
+     if (uagent.search(mini) > -1 ||
+         uagent.search(mobi) > -1)
+        return true;
+     else
+        return false;
+   }
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is Opera Mobile 
+// running on an Android phone.
+function DetectOperaAndroidPhone()
+{
+   if ((uagent.search(engineOpera) > -1) &&
+      (uagent.search(deviceAndroid) > -1) &&
+      (uagent.search(mobi) > -1))
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current browser is Opera Mobile 
+// running on an Android tablet.
+function DetectOperaAndroidTablet()
+{
+   if ((uagent.search(engineOpera) > -1) &&
+      (uagent.search(deviceAndroid) > -1) &&
+      (uagent.search(deviceTablet) > -1))
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current device is a Sony Playstation.
+function DetectSonyPlaystation()
+{
+   if (uagent.search(devicePlaystation) > -1)
+      return true;
+   else
+      return false;
+};
+
+//**************************
+// Detects if the current device is a Nintendo game device.
+function DetectNintendo()
+{
+   if (uagent.search(deviceNintendo) > -1   || 
+        uagent.search(deviceWii) > -1 ||
+        uagent.search(deviceNintendoDs) > -1)
+      return true;
+   else
+      return false;
+};
+
+//**************************
+// Detects if the current device is a Microsoft Xbox.
+function DetectXbox()
+{
+   if (uagent.search(deviceXbox) > -1)
+      return true;
+   else
+      return false;
+};
+
+//**************************
+// Detects if the current device is an Internet-capable game console.
+function DetectGameConsole()
+{
+   if (DetectSonyPlaystation())
+      return true;
+   if (DetectNintendo())
+      return true;
+   if (DetectXbox())
+      return true;
+   else
+      return false;
+};
+
+//**************************
+// Detects if the current device is a Kindle.
+function DetectKindle()
+{
+   if (uagent.search(deviceKindle) > -1)
+      return true;
+   else
+      return false;
+}
+
+//**************************
+// Detects if the current device is a mobile device.
+//  This method catches most of the popular modern devices.
+//  Excludes Apple iPads and other modern tablets.
+function DetectMobileQuick()
+{
+   //Let's exclude tablets.
+   if (DetectTierTablet())
+      return false;
+
+   //Most mobile browsing is done on smartphones
+   if (DetectSmartphone())
+      return true;
+
+   if (uagent.search(deviceMidp) > -1 ||
+        DetectBrewDevice())
+      return true;
+
+   if (DetectOperaMobile())
+      return true;
+
+   if (uagent.search(engineNetfront) > -1)
+      return true;
+   if (uagent.search(engineUpBrowser) > -1)
+      return true;
+   if (uagent.search(engineOpenWeb) > -1)
+      return true;
+
+   if (DetectDangerHiptop())
+      return true;
+      
+   if (DetectMaemoTablet())
+      return true;
+   if (DetectArchos())
+      return true;
+
+   if ((uagent.search(devicePda) > -1) &&
+        !(uagent.search(disUpdate) > -1)) 
+      return true;
+   if (uagent.search(mobile) > -1)
+      return true;
+
+   if (DetectKindle())
+      return true;
+      
+   return false;
+};
+
+
+//**************************
+// Detects in a more comprehensive way if the current device is a mobile device.
+function DetectMobileLong()
+{
+   if (DetectMobileQuick())
+      return true;
+   if (DetectGameConsole())
+      return true;
+   if (DetectSonyMylo())
+      return true;
+
+   //Detect for certain very old devices with stupid useragent strings.
+   if (uagent.search(manuSamsung1) > -1 ||
+        uagent.search(manuSonyEricsson) > -1 || 
+        uagent.search(manuericsson) > -1)
+      return true;
+
+   if (uagent.search(svcDocomo) > -1)
+      return true;
+   if (uagent.search(svcKddi) > -1)
+      return true;
+   if (uagent.search(svcVodafone) > -1)
+      return true;
+
+
+   return false;
+};
+
+
+//*****************************
+// For Mobile Web Site Design
+//*****************************
+
+//**************************
+// The quick way to detect for a tier of devices.
+//   This method detects for the new generation of
+//   HTML 5 capable, larger screen tablets.
+//   Includes iPad, Android (e.g., Xoom), BB Playbook, WebOS, etc.
+function DetectTierTablet()
+{
+   if (DetectIpad() 
+        || DetectAndroidTablet()
+        || DetectBlackBerryTablet()
+        || DetectWebOSTablet())
+      return true;
+   else
+      return false;
+};
+
+//**************************
+// The quick way to detect for a tier of devices.
+//   This method detects for devices which can 
+//   display iPhone-optimized web content.
+//   Includes iPhone, iPod Touch, Android, WebOS, etc.
+function DetectTierIphone()
+{
+   if (DetectIphoneOrIpod())
+      return true;
+   if (DetectAndroidPhone())
+      return true;
+   if (DetectBlackBerryWebKit() && DetectBlackBerryTouch())
+      return true;
+   if (DetectPalmWebOS())
+      return true;
+   if (DetectGarminNuvifone())
+      return true;
+   else
+      return false;
+};
+
+//**************************
+// The quick way to detect for a tier of devices.
+//   This method detects for devices which are likely to be 
+//   capable of viewing CSS content optimized for the iPhone, 
+//   but may not necessarily support JavaScript.
+//   Excludes all iPhone Tier devices.
+function DetectTierRichCss()
+{
+    if (DetectMobileQuick())
+    {
+       if (DetectTierIphone())
+          return false;
+          
+       //The following devices are explicitly ok.
+       if (DetectWebkit())
+          return true;
+       if (DetectS60OssBrowser())
+          return true;
+
+       //Note: 'High' BlackBerry devices ONLY
+       if (DetectBlackBerryHigh())
+          return true;
+          
+       //WP7's IE-7-based browser isn't good enough for iPhone Tier.
+       if (DetectWindowsPhone7())
+          return true;
+       if (DetectWindowsMobile())
+          return true;
+          
+       if (uagent.search(engineTelecaQ) > -1)
+          return true;
+          
+       else
+          return false;
+    }
+    else
+      return false;
+};
+
+//**************************
+// The quick way to detect for a tier of devices.
+//   This method detects for all other types of phones,
+//   but excludes the iPhone and RichCSS Tier devices.
+// NOTE: This method probably won't work due to poor
+//  support for JavaScript among other devices. 
+function DetectTierOtherPhones()
+{
+    if (DetectMobileLong())
+    {
+       //Exclude devices in the other 2 categories
+       if (DetectTierIphone() || DetectTierRichCss())
+          return false;
+
+       //Otherwise, it's a YES
+       else
+          return true;
+    }
+    else
+      return false;
+};
+
+
+//**************************
+// Initialize Key Stored Values.
+function InitDeviceScan()
+{
+    //We'll use these 4 variables to speed other processing. They're super common.
+    //isIphone = DetectIphoneOrIpod();
+    //isAndroidPhone = DetectAndroidPhone();
+    isTierIphone = DetectTierIphone();
+    isTierTablet = DetectTierTablet();
+    //Optional: Comment these out if you don't need them.
+    //isTierRichCss = DetectTierRichCss();
+    //isTierGenericMobile = DetectTierOtherPhones();
+};
+
+//Now, run the initialization method.
+InitDeviceScan();
+
+
+//////////////////////////////////////////////////////////////////////////////
+// YouTubeVideo Objekt siehe: 
+// http://learningapps.de/wiki/YouTubeVideo-Objekt
+//////////////////////////////////////////////////////////////////////////////
+var YouTubeAPIInit = false;
+var YouTubeAPIReady = false;
+var YouTubePlayers = new Array();
+var YouTubePlayerID = 0;
+//////////////////////////////////////////////////////////////////////////////
+function deleteYouTubePlayer(playerId) {
+  for (var i = 0; i < YouTubePlayers.length; i++) {
+    var c = YouTubePlayers[i];
+    if (c && c.ID == playerId) {
+      window.clearInterval(c.updateInterval);
+      try {
+        if (c.ytplayer.stopVideo) c.stop();
+      } catch (e) {}
+      YouTubePlayers[i] = null;
+      break;
+    }
+  }
+}
+function stopAllYouTubePlayers(index) {
+  for (var i = 0; i < YouTubePlayers.length; i++) {
+    var c = YouTubePlayers[i];
+    if(i == index) continue;
+    if(c) c.pause();
+  }
+}
+//////////////////////////////////////////////////////////////////////////////
+function onYouTubePlayerAPIReady() {
+  YouTubeAPIReady = true;
+}
+
+function onYouTubePlayerStateChange(evt) {
+  var p = evt.target;
+  var t = null;
+  for (var i = 0; i < YouTubePlayers.length; i++) {
+    if (YouTubePlayers[i] && YouTubePlayers[i].ytplayer == p) {
+      t = YouTubePlayers[i];
+      break;
+    }
+  }
+  if (!t) return;
+  t.playerState = evt.data;
+  if ((t.playerState == -1 || t.playerState == 5 || t.playerState == 2) && t.firstStart) { // qued
+    t.firstStart = false;
+    //if(t.autoStart) setTimeout("t.play();",500);
+  }
+  if (t.playerState == 1) {
+    document.getElementById("playpauseButton" + t.ID).style.visibility = "visible";
+    document.getElementById("videoTrackbar_" + t.ID).style.visibility = "visible";
+    if (t.video) {
+      // audio
+      var d = document.getElementById("videoPlaceholder" + t.ID);
+      if(typeof(AppClient) != "undefined" && AppClient.isMobileDevice()) {if(d) d.style.display = "none"; t.playpause();}
+      if (d) d.style.opacity = 0;
+      if (d) d.style.filter = "alpha(opacity=0)";
+
+      d = document.getElementById("videoPlaceholderOuter" + t.ID);
+      if(d) d.style.top = "-200px";
+      if(typeof(AppClient) != "undefined" && AppClient.isMobileDevice()) if(d) d.style.display = "none";
+      if (d) d.style.opacity = 0;
+      if (d) d.style.filter = "alpha(opacity=0)";
+
+    }
+  }
+}
+
+function onYouTubePlayerReadyEvent(evt) {
+  var p = evt.target;
+  if(p.addEventListener)
+     p.addEventListener('onStateChange', onYouTubePlayerStateChange);
+  var c = null;
+  for (var i = 0; i < YouTubePlayers.length; i++) {
+    if (YouTubePlayers[i] && YouTubePlayers[i].ytplayer == p) {
+      c = YouTubePlayers[i];
+      break;
+    }
+  }
+  if (!c) return;
+  if (!c.updateInterval) clearInterval(c.updateInterval);
+  c.updateInterval = setInterval("if(YouTubePlayers[" + c.index + "]) YouTubePlayers[" + c.index + "].updatePlayerInfo()", 250);
+  c.updatePlayerInfo();
+  // wont load on ipad because of missing user interaction
+  //setTimeout("YouTubePlayers["+c.index+"].seekTo(0);",1000);
+  //c.ytplayer = document.getElementById("ytPlayer"+c.ID );
+  //c.ytplayer.addEventListener("onStateChange", "YouTubePlayers["+c.index+"].onPlayerStateChange");
+  //c.ytplayer.addEventListener("onError", "YouTubePlayers["+c.index+"].onPlayerError");
+  //Load an initial video into the player
+  if (c.isMute) c.mute(); else { c.unmute(); c.setVolume(100);}
+}
+var isVideoPlayerPreviewMouseDown = false;
+
+function videoPlayerPreviewMouseDown() {
+  isVideoPlayerPreviewMouseDown = true;
+}
+
+function videoPlayerPreviewMouseMove() {
+  isVideoPlayerPreviewMouseDown = false;
+}
+
+function YouTubeVideo(YouTubeVideoID) {
+  this.ID = 0;
+  this.insertDiv = "";
+  this.previewDiv = "";
+  this.videoID = YouTubeVideoID;
+  this.ytplayer = null;
+  this.isMute = false;
+  this.firstStart = true;
+  this.paused = true;
+  this.progressSteps = 25;
+  this.getThumbnailURL = function () {
+    return "//img.youtube.com/vi/" + YouTubeVideoID + "/0.jpg";
+  }
+  this.initAPI = function () {
+    if (YouTubeAPIInit) return;
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/player_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+  }
+  this.contentFilled = false;
+  this.init = function () {
+    if (this.ID == 0) {
+      YouTubePlayerID++;
+      YouTubePlayers.push(this);
+      this.ID = "YouTubePlayer" + YouTubePlayerID;
+      this.index = YouTubePlayers.length - 1;
+    }
+  }
+  this.loadPlayer = function (div) {
+    this.previewDiv = div;
+    var previewIn = document.getElementById(div);
+    if (!previewIn) {
+      alert("Element: " + div + " not found!");
+      return;
+    }
+    this.init();
+    var newH = "100%";
+    if (previewIn.style.height) newH = (parseInt(previewIn.style.height)) + "px";
+    if (previewIn.style.height == "100%") newH = "100%";
+    newdiv = document.createElement("div");
+    newdiv.id = this.ID + '_overlay';
+    newdiv.style.position = "absolute";
+    newdiv.style.width = "100%";
+    newdiv.style.height = "100%";
+    newdiv.style.left = "0px";
+    newdiv.style.top = "0px";
+    newdiv.style.zIndex = "100000";
+    newdiv.style.display = "none";
+    newdiv.style.background = "";
+    newdiv.style.textAlign = "center";
+    newdiv.innerHTML = '<div style="position:absolute;background:black;opacity:0.8;height:100%;width:100%"></div><div style="margin-top:10px;position:relative;width:660px;margin-left:auto;margin-right:auto;height:30px"><span style="float:right;" ><img onclick="document.getElementById(\'' + this.ID + '_overlay\').style.display =\'none\'; YouTubePlayers[' + this.index + '].stop()" style="position:relative;cursor:pointer;" src="//learningapps.org/style/fancy_close.png" alt="" /></span></div><div id="' + this.ID + '_overlayInner' + '" style="position:relative;margin-left:auto;margin-right:auto;width:640px;height:390px;"></div>';
+    document.body.appendChild(newdiv); // height:' + newH + '"
+    var html = '<div style="position:relative;max-height:100%;width:100%;" onmousedown="videoPlayerPreviewMouseDown()" onmousemove="videoPlayerPreviewMouseMove()" ontouchstart="videoPlayerPreviewMouseDown()" ontouchmove="videoPlayerPreviewMouseMove()" ontouchend="if(isVideoPlayerPreviewMouseDown){document.getElementById(\'' + this.ID + '_overlay\').style.display =\'block\'; YouTubePlayers[' + this.index + '].loadPlayerRun(\'' + this.ID + '_overlayInner\');}" onmouseup="if(isVideoPlayerPreviewMouseDown){document.getElementById(\'' + this.ID + '_overlay\').style.display =\'block\'; YouTubePlayers[' + this.index + '].loadPlayerRun(\'' + this.ID + '_overlayInner\');}"><img src="//learningapps.org/style/play_button.png" alt=""  style="z-index:1;position:absolute; margin-top:-30px; margin-left:-30px;left:50%; top:50%; width:60px; max-height:60px !important; cursor:pointer;"/><img src="' + this.getThumbnailURL() + '" style="width:100%;" alt=""/></div>';
+    previewIn.innerHTML = html;
+  }
+  this.loadPlayerRun = function (div) {
+    this.insertDiv = div;
+    var insertIn = document.getElementById(div);
+    if (!insertIn) {
+      alert("Element: " + div + " not found!");
+      return;
+    }
+    this.init();
+    if (!YouTubeAPIReady) {
+      this.initAPI();
+      setTimeout("if(YouTubePlayers[" + this.index + "]) YouTubePlayers[" + this.index + "].loadPlayerRun('" + div + "')", 100);
+      return;
+    }
+    if (!this.contentFilled) {
+      this.contentFilled = true;
+      var newH = "100%";
+      if (insertIn.style.height) newH = (parseInt(insertIn.style.height) - 30) + "px";
+      if (insertIn.style.height == "100%") newH = "100%";
+      insertIn.innerHTML = '<table style="border: 1px solid gray; background:white;width:100%;height:100%;"  cellspacing="0" cellpadding="0"><tr><td style="height:100%" onmouseup="YouTubePlayers[' + (this.index) + '].playpause();"><div style="height:' + newH + '" id="videoPlaceholderOuter' + this.ID + '"><div style="height:' + newH + '" id="videoPlaceholder' + this.ID + '"> </div></div></td></tr>' + '<tr><td><div id="videoControls' + this.ID + '" style="background: white; font-size: 0.75em;"><table style="width:100%" cellspacing="0" cellpadding="3"><tr><td width="30" align="center"><button type="button" style="position:static;width:auto;display:inline; visibility:hidden;font-size:11px; text-decoration:none; background:#F3F3F3; color:#333; height:25px; width:25px; padding:0px; text-align:center; padding:1px;maring-right:1px" id="playpauseButton' + this.ID + '" onclick="YouTubePlayers[' + (this.index) + '].playpause();" class="btn btn-primary"> \u25B6 </button></td><td  style="overflow: hidden;">' + this.createTrackBarItems() + '</td><td width="60" align="right"><span style="padding:1px" id="videoTime' + this.ID + '" > </span></td></tr></table></div></td></tr></table>';
+      setTimeout("YouTubePlayers[" + this.index + "].loadPlayerRun('" + div + "')", 250 + Math.floor(Math.random * 1000));
+      return;
+    }
+    if (this.ytplayer != null) {
+      window.clearInterval(this.updateInterval);
+      try {
+        if (this.ytplayer.stopVideo) this.stop();
+      } catch (e) {}
+      var d = document.getElementById('videoPlaceholderOuter' + this.ID);
+      d.innerHTML = '<div style="height:' + newH + '" id="videoPlaceholder' + this.ID + '"> </div>';
+      this.ytplayer = null;
+      document.getElementById("playpauseButton" + this.ID).style.visibility = "hidden";
+      document.getElementById("videoTrackbar_" + this.ID).style.visibility = "hidden";
+      var d = document.getElementById(this.ID + '_overlay');
+      if (d) d.style.display = "block";
+    }
+    if (this.ytplayer == null) {
+      this.ytplayer = new YT.Player('videoPlaceholder' + this.ID, {
+        height: '100%',
+        width: '100%',
+        playerVars: {
+          autoplay: (this.autoStart ? 1 : 0),
+          start: this.startTime,
+          controls: 0,
+          showinfo: 0,
+          rel: 0,
+          wmode: "transparent"
+        },
+        videoId: this.videoID,
+        events: {
+          'onReady': onYouTubePlayerReadyEvent
+        }
+      });
+
+    } else {}
+  }
+  this.onPlayerError = function (errorCode) {
+    if (errorCode == 100) {
+      deleteYouTubePlayer(this.ID);
+      var insertIn = document.getElementById(this.insertDiv);
+      insertIn.innerHTML = '<div style="background:#FFDDDD;padding:3px">' + getAppClientTranslation("APPCLIENT_VIDEODELTED") + '</div>';
+      return;
+    }
+    if (errorCode == 150 || errorCode == 101) {
+      deleteYouTubePlayer(this.ID);
+      var insertIn = document.getElementById(this.insertDiv);
+      insertIn.innerHTML = '<div style="background:#FFDDDD;padding:3px">' + getAppClientTranslation("APPCLIENT_VIDEOFORBIDDEN") + '</div>';
+      return;
+    }
+    if (errorCode == 2) {
+      deleteYouTubePlayer(this.ID);
+      var insertIn = document.getElementById(this.insertDiv);
+      insertIn.innerHTML = '<div style="background:#FFDDDD;padding:3px">' + getAppClientTranslation("APPCLIENT_VIDEOWRONGURL") + '</div>';
+      return;
+    }
+    alert("An error occured of type:" + errorCode);
+  }
+  this.getTimeFromSeconds = function (sTime) {
+    var seconds = parseInt(sTime);
+    if (isNaN(seconds)) {
+      return "0:00";
+    }
+    return ((seconds - seconds % 60)/60)+":"+(seconds % 60 < 10 ? "0":"")+(seconds % 60);
+  }
+
+  this.restartVideo = function () {
+    this.pause();
+    this.seekTo(0);
+    this.pause();
+    this.videoPosition = 0;
+    var self = this;
+    setTimeout(function(){
+     self.videoPosition = 0;
+     self.videoCurrentTime = 0;
+     self.pause(); 
+     if (self.isMute) self.mute();
+    },200);        
+  }
+
+  this.updatePlayerInfo = function () {
+    if (!document.getElementById('videoControls' + this.ID)) {
+      deleteYouTubePlayer(this.ID);
+      return;
+    }
+    // Also check that at least one function exists since when IE unloads the
+    // page, it will destroy the SWF before clearing the interval.
+    if (this.ytplayer && this.ytplayer.getDuration) {
+      var oldPlayerState = this.playerState;
+      this.playerState = this.ytplayer.getPlayerState();
+      this.volume = this.ytplayer.getVolume();
+      this.videoDuration = this.ytplayer.getDuration();
+      this.videoCurrentTime = this.ytplayer.getCurrentTime();
+      this.videoLength = (this.endTime == 0 ? this.videoDuration : this.endTime) - (this.startTime);
+      this.videoPosition = this.videoCurrentTime - this.startTime;
+      if (this.playerState == 1) this.paused = false;
+      if (this.playerState == 2) this.paused = true;
+      if (this.playerState == 0) this.paused = true;
+      var button = document.getElementById('playpauseButton' + this.ID);     
+      if (!this.paused) button.innerHTML = " II "; else button.innerHTML = " \u25B6 ";
+//	button.value = this.playerState;
+      if (this.videoPosition < -3 && this.playerState == 1) {
+        this.seekTo(0);
+      }
+      if (this.playerState == 1 && oldPlayerState != 1){ 
+          stopAllYouTubePlayers(this.index);
+      }
+
+      if (this.playerState == 0 && oldPlayerState != 0 && this.videoCurrentTime == this.videoDuration){ 
+	// video ended at the end
+	this.restartVideo();
+      }
+
+      if (this.playerState == 1 && oldPlayerState == 1) 
+      if ((this.endTime != "" && this.endTime != 0) || (this.videoPosition >= this.videoLength)) 
+      if (this.videoCurrentTime >= this.endTime && this.endTime != 0 ||
+          this.videoPosition >= this.videoLength && this.videoPosition != 0) {
+        // video ended on time
+	this.restartVideo();
+      }
+
+      if (this.videoDuration > 0) {
+        this.videoPosition = Math.max(this.videoPosition, 0);
+        var time = document.getElementById("videoTime" + this.ID);
+        time.innerHTML = this.getTimeFromSeconds(this.videoPosition) + "/" + this.getTimeFromSeconds(this.videoLength);
+        var progressW = Math.floor(this.progressSteps * (this.videoPosition / this.videoLength));
+        for (var i = 0; i < this.progressSteps; i++)
+        if (i <= progressW) document.getElementById('videoProcess_' + this.ID + '_' + i).style.background = "#333333";
+        else document.getElementById('videoProcess_' + this.ID + '_' + i).style.background = "#DDDDDD";
+      }
+      //this.bytesTotal = this.ytplayer.getVideoBytesTotal();
+      //this.startBytes = this.ytplayer.getVideoStartBytes();
+      //this.bytesLoaded = this.ytplayer.getVideoBytesLoaded();
+    }
+  }
+  this.setVolume = function (volume) {
+    if (isNaN(volume) || volume < 0 || volume > 100) {
+      alert("Please enter a valid volume between 0 and 100.");
+    } else if (this.ytplayer) {
+      this.ytplayer.setVolume(volume);
+    }
+  }
+  this.seekTo = function (n) {
+    if (this.ytplayer) {
+      this.ytplayer.seekTo(this.startTime + n, true);
+    }
+  }
+  this.seekToPos = function (p) {
+    this.seekTo(Math.floor(this.videoLength * p / this.progressSteps));
+  }
+  this.play = function () {
+    if (this.ytplayer) {
+      //this.paused = false;
+      if(this.videoPosition < 0) this.seekTo(0);
+      this.ytplayer.playVideo();
+    }
+  }
+  this.pause = function () {
+    if (this.ytplayer && this.ytplayer.pauseVideo) {
+      //this.paused = true;
+      this.ytplayer.pauseVideo();
+    }
+  }
+  this.playpause = function () {
+    if (this.paused) this.play();
+    else this.pause();
+  }
+  this.stop = function () {
+    if (this.ytplayer) {
+      //this.paused = true;
+      this.ytplayer.stopVideo();
+    }
+  }
+  this.mute = function () {
+    if (this.ytplayer) {
+      this.ytplayer.mute();
+      this.isMute = true;
+    }
+  }
+  this.unmute = function () {
+    if (this.ytplayer) {
+      this.ytplayer.unMute();
+      this.isMute = false;
+    }
+  }
+  this.hideControls = function () {
+    var d = document.getElementById('videoControls' + this.ID);
+    d.style.display = "none";
+  }
+  this.showControls = function () {
+    var d = document.getElementById('videoControls' + this.ID);
+    d.style.display = "block";
+  }
+  this.createTrackBarItems = function () {
+    var s = "";
+    s = '<table id="videoTrackbar_' + this.ID + '" style="visibility:hidden; background:#EEE;height:16px; width:100%" cellspacing="0" cellpadding="0"><tr>';
+    for (var i = 0; i < this.progressSteps; i++) s += '<td id="videoProcess_' + this.ID + '_' + i + '" style="width:' + (100.0 / this.progressSteps) + '%" onclick="YouTubePlayers[' + (this.index) + '].seekToPos(' + i + ');" ontouchend="YouTubePlayers[' + (this.index) + '].seekToPos(' + i + ');"></td>';
+    s += '</tr></table>';
+    return s;
+  }
+}
+//////////////////////////////////////////////////////////////////////////////
+function YouTubeAudio(YouTubeVideoID) {
+  this.video = new YouTubeVideo(YouTubeVideoID);
+  this.ID = 0;
+  this.insertDiv = "";
+  this.getThumbnailURL = function () {
+    return "//img.youtube.com/vi/" + YouTubeVideoID + "/0.jpg";
+  }
+  this.initAPI = function () {
+    if (YouTubeAPIInit) return;
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/player_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+  }
+  this.updatePlayerInfo = function () {
+    this.video.updatePlayerInfo();
+  }
+  this.onPlayerError = function (errorCode) {
+    this.video.onPlayerError(errorCode);
+  }
+  this.contentFilled = false;
+
+  this.loadPlayer = function (div) {
+    this.insertDiv = div;
+    this.video.insertDiv = div;
+    var insertIn = document.getElementById(div);
+    if (!insertIn) {
+      alert("Element: " + div + " not found!");
+      return;
+    }
+    if (this.ID == 0) {
+      YouTubePlayerID++;
+      YouTubePlayers.push(this);
+      this.ID = "YouTubePlayer" + YouTubePlayerID;
+      this.index = YouTubePlayers.length - 1;
+      this.video.audioPlayer = this;
+      this.video.index = this.index;
+      this.video.ID = this.ID;
+      this.video.autoStart = this.autoStart;
+      this.video.startTime = this.startTime;
+      this.video.endTime = this.endTime;
+      this.video.isMute = false;
+    }
+    if (!YouTubeAPIReady) {
+      this.initAPI();
+      setTimeout("if(YouTubePlayers[" + this.index + "]) YouTubePlayers[" + this.index + "].loadPlayer('" + div + "')", 500);
+      return;
+    }
+    if (!this.contentFilled) {
+      this.contentFilled = true;
+      insertIn.innerHTML = '<table style="border: 1px solid gray; background:white;width:100%; height:30px" cellspacing="0" cellpadding="0"><tr><td><div id="videoControls' + this.ID + '" style="background: white; font-size: 0.75em; "><table style="width:100%" cellspacing="0" cellpadding="3"><tr><td width="30" align="center"><div id="videoPlaceholderOuter' + this.ID + '" style="position:absolute;height:25px; opacity:0.01;width:35px;overflow:hidden;padding:0"><div style="position:absolute;left:-82px;top:-87px;height:200px; width:200px;" id="videoPlaceholder' + this.ID + '"></div></div><button type="button" style="position:static;display:inline;font-size:15px;cursor:pointer; font-weight:bold;text-decoration:none; height:25px; width:25px; padding:0px; text-align:center; background:#F3F3F3; color:#333;" class="btn btn-primary" id="playpauseButton' + this.ID + '" onclick="YouTubePlayers[' + (this.index) + '].playpause();"> \u25B6 </button> </td><td  style="overflow: hidden;">' + this.video.createTrackBarItems() + '</td><td width="60" align="right"><span style="padding:1px;padding-left:3px" id="videoTime' + this.ID + '" > </span></td></tr></table></div></td></tr></table>';
+      setTimeout("YouTubePlayers[" + this.index + "].loadPlayer('" + div + "')", 250 + Math.floor(Math.random * 1000));
+      return;
+    }
+    if(!this.video.ytplayer){
+     this.video.ytplayer = new YT.Player('videoPlaceholder' + this.ID, {
+      height: '200px',
+      width: '200px',
+      playerVars: {
+        autoplay: (this.autoStart ? 1 : 0),
+        start: this.startTime,
+        controls: 0,
+        showinfo: 0,
+        rel: 0,
+        wmode: "transparent"
+      },
+      videoId: this.video.videoID,
+      events: {
+        'onReady': onYouTubePlayerReadyEvent
+      }
+     });
+
+     this.ytplayer = this.video.ytplayer;
+    }
+  }
+  this.setVolume = function (volume) {
+    this.video.setVolume(volume);
+  }
+  this.seekTo = function (n) {
+    this.video.seekTo(n);
+  }
+  this.seekToPos = function (pos) {
+    this.video.seekToPos(pos);
+  }
+  this.play = function () {
+    this.video.play();
+  }
+  this.pause = function () {
+    this.video.pause();
+  }
+  this.playpause = function () {
+    this.video.playpause();
+  }
+  this.stop = function () {
+    this.video.stop();
+  }
+  this.mute = function () {
+    this.video.mute();
+  }
+  this.unmute = function () {
+    this.video.unmute();
+  }
+
+}
+//////////////////////////////////////////////////////////////////////////////
+

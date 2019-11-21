@@ -10,6 +10,7 @@ import { connect } from 'react-redux';
 import AnimMenu from './components/Menus/AnimMenu';
 import ShowAnim from './components/SubMenu/ShowAnim';
 import TestsMenu from './components/Menus/TestsMenu';
+import TrainingsMenu from './components/Menus/TrainingsMenu';
 
 class App extends React.Component {
   showPage() {
@@ -21,6 +22,7 @@ class App extends React.Component {
       case 'AnimMenu' : comp = <AnimMenu />; break;
       case 'ShowAnim' : comp = <ShowAnim />; break;
       case 'TestsMenu' : comp = <TestsMenu />; break;
+      case 'TrainingsMenu' : comp = <TrainingsMenu />; break; 
     }
     return comp;
   }

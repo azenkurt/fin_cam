@@ -25,10 +25,14 @@ let initRed = ( state = InitState, action) => {
             state = {...state, 
                     curScreen : "ShowAnim", 
                     curSub: action.sub, 
-                    curANIM : action.fileName};
+                    curANIM : action.fileName,
+                    curOwner : action.owner};
             break;
         case "SWITCH_TO_TESTS_MENU" :
             state = { ...state, curScreen : "TestsMenu"};
+            break;
+        case "SWITCH_TO_TRAININGS_MENU" :
+            state = { ...state, curScreen : "TrainingsMenu"};
             break;
     }           
     return state;

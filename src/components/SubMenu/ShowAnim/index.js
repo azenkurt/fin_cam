@@ -9,13 +9,13 @@ class ShowAnim extends React.Component {
             <div className = "ShowAnim">                
                 <iframe
                     className = "ShowAnim_screen"                   
-                    src = {"/anim/"+this.props.CurFile + ".html"}                    
+                    src = {"/"+this.props.CurSub+"/"+this.props.CurFile + ".html"}                    
                     >                         
                     </iframe>
 
                  <button
                     className = "ShowAnim_but"
-                    onClick = { ()=> this.props.BackToAnimMenu() }>
+                    onClick = { ()=> this.props.BackToMenu( this.props.CurOwner) }>
                     Вярнуцца да выбару анімацыі
                 </button>
                 <button
@@ -29,11 +29,18 @@ class ShowAnim extends React.Component {
 }
 
 let mapState = ( state ) => ({
-    CurFile: state.curANIM
+    CurFile: state.curANIM,
+    CurSub : state.curSub,
+    CurOwner: state.curOwner
 })
 let mapDispatch = dispatch => {
     return {
-        BackToAnimMenu : () => dispatch ({ type : "SWITCH_TO_ANIM_MENU" }),
+        BackToMenu : ( owner ) => {
+            switch ( owner ) {
+                case 'AnimMenu' : dispatch ({ type : "SWITCH_TO_ANIM_MENU" }); break;
+                case 'TrainingsMenu' : dispatch ({ type : "SWITCH_TO_TRAININGS_MENU" }); break;
+            }                
+        },
         BackToMainMenu : () => dispatch ({ type : "MAIN_MENU"})      
     }
 }

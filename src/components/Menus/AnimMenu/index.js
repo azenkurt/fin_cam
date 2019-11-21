@@ -22,7 +22,7 @@ class AnimMenu extends React.Component {
             list.push (
                 <div 
                     className = "AnimMenu_anim"
-                    onClick = { () => {this.props.ShowAnim(el)} }>{el}</div> 
+                    onClick = { () => {this.props.ShowAnim( 'AnimMenu', 'anim', el)} }>{el}</div> 
             )
         })
         return list;
@@ -48,7 +48,7 @@ const mapState = ( state ) => ({
 })
 const mapDispatch = dispatch => {
     return {
-         ShowAnim : ( ff ) => dispatch({ type : "SHOW_ANIM", fileName : ff}),
+         ShowAnim : ( owner, sub, ff ) => dispatch({ type : "SHOW_ANIM", owner: owner, sub : sub, fileName : ff}),
          BackToMainMenu : () => dispatch ({ type : "MAIN_MENU"})        
     }
 }
