@@ -58,6 +58,9 @@ let initRed = ( state = InitState, action) => {
                         numb : action.numb
                     };
             break;
+        case "SWITCH_TO_YOUNG_MENU" :
+            state = { ...state, curScreen : "YoungMenu"};
+            break;
     }           
     return state;
 }

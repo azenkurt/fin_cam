@@ -18,6 +18,7 @@ import OlympMenu from './components/Menus/OlympMenu';
 import LibrMenu from './components/Menus/LibrMenu';
 import AudioMenu from './components/Menus/AudioMenu';
 import Author from './components/MainMenu/Author';
+import YoungMenu from './components/Menus/YoungMenu';
 
 class App extends React.Component {
   showPage() {
@@ -37,6 +38,7 @@ class App extends React.Component {
       case 'LibrMenu' : comp = <LibrMenu />; break;
       case 'AudioMenu' : comp = <AudioMenu />; break;
       case 'Author' : comp = <Author />; break;
+      case 'YoungMenu' : comp = <YoungMenu />; break;
     }
     return comp;
   }

@@ -70,7 +70,7 @@ class MainMenu extends React.Component {
                 onClick = { () => this.props.switchAudioMenu () }
                 ><p>Аўдыёлітаратура</p></div>
              <div                 
-               //  onClick = { () => this.props.switchYoungMenu () }
+                onClick = { () => this.props.switchYoungMenu () }
                 ><p>Young</p></div>
             </div>            
         )
@@ -92,7 +92,7 @@ const mapDispatch = dispatch => {
         switchSPMenu : () => dispatch ({ type : 'SWITCH_TO_SP_MENU'}),
         switchTestsMenu : () => dispatch ({ type : 'SWITCH_TO_TESTS_MENU'}),
         switchTrainingsMenu : () => dispatch ({ type : 'SWITCH_TO_TRAININGS_MENU'}),
-      //   switchYoungMenu : () => dispatch ({ type : 'SWITCH_TO_YOUNG_MENU'})
+        switchYoungMenu : () => dispatch ({ type : 'SWITCH_TO_YOUNG_MENU'}),
         switchToAuthor :( n ) => dispatch({ type : 'SWITCH_TO_AUTHOR_MENU' , numb : n })
     }
 }
