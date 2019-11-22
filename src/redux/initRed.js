@@ -63,7 +63,7 @@ let initRed = ( state = InitState, action) => {
             break;
         case "SHOW_SLIDESHOW" :
             state = { ...state, 
-                        cusScreen: "SlideShow",
+                        curScreen: "SlideShow",
                         photoArr : action.photoArr,
                         ownerTag : action.Tag
                     };
