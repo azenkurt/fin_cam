@@ -1,14 +1,13 @@
 import React from 'react';
 import "./MainMenu.css";
-
-import Author from './Author';
-
 import { connect } from 'react-redux';
 
 class MainMenu extends React.Component {    
     constructor ( props ) {
        super( props );
-       this.state = {};
+       this.state = {
+          auth: ["Kolas", "Kupala", "Bikov", "Melez", "Baradulin"]
+       };
     }
     genAuthorList() {
        let list = [];
@@ -16,6 +15,7 @@ class MainMenu extends React.Component {
           list.push (
              <div 
                className = "Authors_author"
+               style = {{backgroundImage: "url(" + "/author/"+this.state.auth[el]+"/photo/1.jpg" + ")"}}
                onClick = { () => this.props.switchToAuthor ( el ) }>
                </div>
           )

@@ -61,6 +61,14 @@ let initRed = ( state = InitState, action) => {
         case "SWITCH_TO_YOUNG_MENU" :
             state = { ...state, curScreen : "YoungMenu"};
             break;
+        case "SHOW_SLIDESHOW" :
+            state = { ...state, 
+                        cusScreen: "SlideShow",
+                        photoArr : action.photoArr,
+                        ownerTag : action.Tag
+                    };
+            break;
+            
     }           
     return state;
 }

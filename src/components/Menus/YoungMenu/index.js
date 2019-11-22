@@ -38,9 +38,9 @@ class YoungMenu extends React.Component {
                     className = "YoungMenu_video"                    
                     width = "300px"
                     height = "200px"
-                    controls
-                    type="video/mp4" >
-                        <source src={"/video/young/"+ el +".wmv" } type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'></source>
+                    controls        
+                    src={"/video/young/"+ el +".webm" } type='video/webm;'>
+                       
                     </video>
             )
         });
