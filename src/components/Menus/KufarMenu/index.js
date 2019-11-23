@@ -37,9 +37,9 @@ class KufarMenu extends React.Component {
             <ul className = "KufarMenu_older">          
                 { this.renderLinkList() }
                 <li><a href ={"/video/booktrailer/Рыгор Барадулін(М.Вайткевіч).webm"}>Буктрэйлер Вайткевіч М. "Рыгор Барадулін"</a></li>
-                <li><a href ={"/video/booktrailer/Мая Ашмяншчына Хам'юк Антон.webm"}>Буктрэйлер Хам'.юк А. "Мая Ашмяншчына"</a></li>
+                <li><a href ={"/video/booktrailer/Мая Ашмяншчына Хам'юк Антон.webm"}>Буктрэйлер Хам'юк А. "Мая Ашмяншчына"</a></li>
                 <li><a href ={"/video/booktrailer/Буктрэйлер___.webm"}>Буктрэйлер "Трэба дома бываць не госцем..."</a></li>
-                <li><a href ={"/video/booktrailer/Буктрэйлер Хам'юка А..webm"}>Буктрэйлер Хам'.юк А. "Рыгор Барадулін"</a></li>
+                <li><a href ={"/video/booktrailer/Буктрэйлер Хам'юка А..webm"}>Буктрэйлер Хам'юк А. "Рыгор Барадулін"</a></li>
                 <li><a href ={"/video/booktrailer/Буктрэйлер Разон П..webm"}>Буктрэйлер Разон П.</a></li>
                 </ul>
                 <button
