@@ -34,22 +34,30 @@ class YoungMenu extends React.Component {
         let list = [];
         this.state.list.forEach( el => {
             list.push(
-                <video
-                    className = "YoungMenu_video"                    
-                    width = "300px"
-                    height = "200px"
-                    controls        
-                    src={"/video/young/"+ el +".webm" } type='video/webm;'>
-                       
-                    </video>
-            )
+                <li>                    
+                    <video
+                            className = "YoungMenu_video"                    
+                            width = "300px"
+                            height = "200px"
+                            controls        
+                            src={"/video/young/"+ el +".webm" } type='video/webm;'>                            
+                            </video>    
+                            <p className = "YoungMenu_el_header">{ el }</p>    
+                </li>)
         });
         return list;
     }
     render() {
         return (
             <div className = "YoungMenu">
-                { this.getRenderList() }
+                <ul className = "YoungMenu_older">
+                    { this.getRenderList() }
+                </ul>               
+                <button
+                    className = "YoungMenu_but"
+                    onClick = { ()=> this.props.BackToMainMenu() }>
+                    Вярнуцца да галоўнага меню
+                </button>
             </div>
         )
     }

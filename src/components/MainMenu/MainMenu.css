@@ -8,8 +8,10 @@
 
 .But {
     position: absolute;
-    height: 45px;
-    border: 1px solid black;
+    height: 45px;  
+    margin-top: 10px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+    padding: 5px;
 }
 .But>p {
    font: 20px "Monotype Corsiva"; 
@@ -44,4 +46,40 @@
 .Authors_author {
     width: 150px;
     height: 200px;
+    border-radius: 5px;
+}
+.Authors_author:hover {
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+}
+.YoungBut {
+    position: absolute;
+    left: -40px;
+    top: 50%;
+    margin-top: -40px;    
+    width: 80px;
+    height: 80px;
+    font: 20px "Monotype Corsiva";    
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+    padding: 5px;   
+    text-align: center;
+    border: 5px;
+}
+.YoungBut:hover {
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+}
+.KufarBut {
+    position: absolute;
+    left:960px;
+    top: 50%;
+    margin-top: -50px;    
+    width: 100px;
+    height: 100px;
+    font: 20px "Monotype Corsiva";    
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+    padding: 5px;   
+    text-align: center;
+    border: 5px;
+}
+.KufarBut:hover {
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
 }

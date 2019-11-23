@@ -18,9 +18,12 @@ class GamesMenu extends React.Component {
         let list = [];
         this.state.GamesList.forEach( el => {
             list.push(
-                <div 
+                <li>
+                    <a 
                 className = "GamesMenu_el"
-                onClick = { () => this.props.ShowAnim( 'Games', el ) }>{ el }</div>
+                onClick = { () => this.props.ShowAnim( 'Games', el ) }>{ el }</a>
+                </li>
+                
             )
         });
         return list;
@@ -28,7 +31,9 @@ class GamesMenu extends React.Component {
     render() {
         return (
             <div className = "GamesMenu">
+                <ul className = "GamesMenu_older">
                 { this.genGamesList() }
+                </ul>                
                 <button
                     className = "GamesMenu_but"
                     onClick = { ()=> this.props.BackToMainMenu() }>

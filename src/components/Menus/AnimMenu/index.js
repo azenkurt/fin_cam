@@ -20,9 +20,11 @@ class AnimMenu extends React.Component {
         let list = [];
         this.state.animList.forEach ( el => {
             list.push (
-                <div 
+                <li>
+                    <a 
                     className = "AnimMenu_anim"
-                    onClick = { () => {this.props.ShowAnim( 'AnimMenu', 'tests', el)} }>{el}</div> 
+                    onClick = { () => {this.props.ShowAnim( 'AnimMenu', 'tests', el)} }>{el}</a> 
+                </li>                
             )
         })
         return list;
@@ -31,7 +33,9 @@ class AnimMenu extends React.Component {
         return (
             <div className = "AnimMenu">
                 <div className = "AnimMenu_cont">
+                    <ul className = "ANIM_older">
                     { this.genLinkList() }  
+                    </ul>                   
                 </div>
                 <button
                     className = "AnimMenu_but"

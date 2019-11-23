@@ -8,7 +8,15 @@ class SPMenu extends React.Component {
         super ( props );
         this.state = {
             SPList : [
-                "Верш_Разон П"
+                "Верш Знічка Шукеловіч Н",
+                "Верш Разон П",
+                "Казка Даша на фантастычнай планеце (Дзенісенка Д.)",
+                "Казка Дзіўныя прыгоды (Дзенісенка Д.)",
+                "Казка Калядная ноч (Хромчанкава П.)",
+                "Казка Новая гаспадыня Лупі (Бабраўніцкая Э.)",
+                "Казка Правы чалавека (Дзенісенка Д.)",
+                "Казка Фарбы (Іўлюшкіна М.)",
+                "Казка Як жучок і рыбка вясну шукалі (Ганусевіч М.)"
             ]
         }
     }
@@ -16,9 +24,11 @@ class SPMenu extends React.Component {
         let list = [];
         this.state.SPList.forEach( el => {
             list.push(
-                <div 
+                <li>
+                <a
                 className = "SPMenu_el"
-                onClick = { () => this.props.ShowPDF( 'SP', el ) }>{ el }</div>
+                onClick = { () => this.props.ShowPDF( 'SP', el ) }>{ el }</a>
+                </li>
             )
         });
         return list;
@@ -26,7 +36,9 @@ class SPMenu extends React.Component {
     render() {
         return (
             <div className = "SPMenu">
-                { this.genTestsList() }
+                <ul className = "SP_older">
+                    { this.genTestsList() }
+                </ul>               
                 <button
                     className = "SPMenu_but"
                     onClick = { ()=> this.props.BackToMainMenu() }>

@@ -69,9 +69,14 @@ class MainMenu extends React.Component {
                 className = "But R n3"
                 onClick = { () => this.props.switchAudioMenu () }
                 ><p>Аўдыёлітаратура</p></div>
-             <div                 
+             <div   
+                className = "YoungBut"              
                 onClick = { () => this.props.switchYoungMenu () }
-                ><p>Young</p></div>
+                ><p>Маладыя паэты</p></div>
+            <div   
+                className = "KufarBut"              
+                onClick = { () => this.props.switchKufarMenu () }
+                ><p>Творчыя напрацоўкі дзяцей</p></div>
             </div>            
         )
     }
@@ -93,6 +98,7 @@ const mapDispatch = dispatch => {
         switchTestsMenu : () => dispatch ({ type : 'SWITCH_TO_TESTS_MENU'}),
         switchTrainingsMenu : () => dispatch ({ type : 'SWITCH_TO_TRAININGS_MENU'}),
         switchYoungMenu : () => dispatch ({ type : 'SWITCH_TO_YOUNG_MENU'}),
+        switchKufarMenu : () => dispatch ({ type : 'SWITCH_TO_KUFAR_MENU'}),
         switchToAuthor :( n ) => dispatch({ type : 'SWITCH_TO_AUTHOR_MENU' , numb : n })
     }
 }

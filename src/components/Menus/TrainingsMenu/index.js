@@ -25,10 +25,12 @@ class TrainingsMenu extends React.Component {
         let list = [];
         this.state.trainingsList.forEach ( el => {
             list.push(
-                <div 
+                <li>
+                    <a 
                     className = "TrainingsMenu_el"
                     onClick = { () => this.props.ShowAnim( 'trainings', el)} 
-                    >{ el }</div>
+                    >{ el }</a>
+                </li>               
             )
         })
         return list;
@@ -36,7 +38,9 @@ class TrainingsMenu extends React.Component {
     render() { 
         return (
             <div className = "TrainingsMenu">
-                { this.genTrainingsMenuList() }
+                <ul className = "TRAININGS_older">
+                    { this.genTrainingsMenuList() }
+                </ul>                
                 <button
                     className = "TrainingsMenu_but"
                     onClick = { ()=> this.props.BackToMainMenu() }>

@@ -20,6 +20,7 @@ import AudioMenu from './components/Menus/AudioMenu';
 import Author from './components/MainMenu/Author';
 import YoungMenu from './components/Menus/YoungMenu';
 import AuthorPhotoShow from './components/MainMenu/AuthorPhotoShow';
+import KufarMenu from './components/Menus/KufarMenu';
 
 class App extends React.Component {
   showPage() {
@@ -41,6 +42,7 @@ class App extends React.Component {
       case 'Author' : comp = <Author />; break;
       case 'YoungMenu' : comp = <YoungMenu />; break;
       case 'SlideShow' : comp = <AuthorPhotoShow />; break;
+      case 'KufarMenu' : comp = <KufarMenu />; break;
     }
     return comp;
   }
